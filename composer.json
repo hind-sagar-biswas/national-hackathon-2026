@@ -12,6 +12,7 @@
         "php": "^8.3",
         "hindbiswas/laravel-model-utils": "^1.0",
         "inertiajs/inertia-laravel": "^3.0",
+        "intervention/image": "^4.3",
         "laravel/framework": "^13.0",
         "laravel/jetstream": "^5.4",
         "laravel/octane": "^2.19",
