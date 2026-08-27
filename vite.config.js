@@ -22,7 +22,9 @@ export default defineConfig({
             input: 'resources/js/app.js',
             refresh: true,
         }),
-        inertia(),
+        inertia({
+            ssr: false,
+        }),
         vue({
             template: {
                 transformAssetUrls: {
