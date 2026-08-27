@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\ImageOptimizer;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
@@ -44,5 +45,7 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perMinute((int) config('app.rate_limits.user_actions_per_minute', 20))->by((string) $key);
         });
+
+        $this->app->singleton(ImageOptimizer::class, fn () => new ImageOptimizer);
     }
 }
