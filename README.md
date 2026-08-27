@@ -1,6 +1,13 @@
-# Admin Template Starter Kit
+# National Hackathon 2026 PSTU
 
-A Laravel 13 starter kit for admin-style products with built-in authentication flows, role and permission support, Inertia + Vue UI, and configurable feature flags.
+Boilerplate generated from [https://github.com/hind-sagar-biswas/admin-template](Admin Template Starter Kit) by  [https://hindbiswas.com](Hind Biswas Krishna)
+
+## Current Stacks
+
+- Server: Octane via FrankenPHP
+- Database: PostgreSQL with PGBouncer
+- Frontend: Vite + Tailwind + daisyUI
+- Cache: Redis (Valkey)
 
 ## What This Template Includes
 
