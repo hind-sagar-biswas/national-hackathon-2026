@@ -34,7 +34,7 @@ class HealthzController extends Controller
         }
 
         return response()->json([
-            'octane' => function_exists('frankenphp_version') ? 'active' : 'fallback',
+            'octane' => app()->bound('octane') ? 'active (FrankenPHP)' : 'fallback (standard CLI/FPM)',
             'database' => $dbStatus,
             'valkey' => $valkeyStatus,
             's3_storage' => $s3Status,
