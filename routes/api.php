@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\HealthzController;
 use App\Http\Controllers\NotificationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -18,3 +19,5 @@ Route::middleware('auth:sanctum')->name('api.')->group(function () {
             Route::delete('/{id}', 'destroy')->name('destroy');
         });
 });
+
+Route::get('/healthz', HealthzController::class)->name('site-health');
