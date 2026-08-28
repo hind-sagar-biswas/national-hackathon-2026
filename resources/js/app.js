@@ -9,9 +9,12 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import DaisyPrimePreset from './daisy-prime';
 import { faGaugeHigh, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { configureEcho } from "@laravel/echo-vue";
 
 axios.defaults.withCredentials = true;
 axios.defaults.withXSRFToken = true;
+
+configureEcho({ broadcaster: "reverb" });
 
 const appName = import.meta.env.VITE_APP_NAME || 'Admin Panel';
 
