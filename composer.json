@@ -63,11 +63,11 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "bunx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan octane:start --port=8000 --workers=4 --max-requests=500\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"bun run dev\" --names=octane,queue,logs,vite --kill-others"
+            "bunx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74,#eab308\" \"php artisan octane:start --port=8000 --workers=4 --max-requests=500\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"bun run dev\" \"php artisan reverb:start\" --names=octane,queue,logs,vite,reverb --kill-others"
         ],
         "quick": [
             "Composer\\Config::disableProcessTimeout",
-            "bunx concurrently -c \"#93c5fd,#fdba74\" \"php artisan octane:start --port=8000 --workers=4 --max-requests=500\" \"bun run dev\" --names=server,vite --kill-others"
+            "bunx concurrently -c \"#93c5fd,#fdba74,#eab308\" \"php artisan octane:start --port=8000 --workers=4 --max-requests=500\" \"bun run dev\" \"php artisan reverb:start\" --names=server,vite,reverb --kill-others"
         ],
         "test": [
             "@php artisan config:clear --ansi",
