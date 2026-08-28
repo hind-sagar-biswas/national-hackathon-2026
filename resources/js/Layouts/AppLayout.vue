@@ -5,6 +5,8 @@ import { dashboard, login, logout, register, welcome } from '@/routes';
 import { show as profileShow } from '@/routes/profile';
 import { Head, Link } from '@inertiajs/vue3';
 import { UserIcon } from 'lucide-vue-next';
+import Toast from 'primevue/toast';
+import NotificationBell from '@/Components/Nav/NotificationBell.vue';
 
 const { user } = useAuth();
 
@@ -23,6 +25,7 @@ defineProps({
 
     <Head title="Welcome" />
     <div class="flex flex-col min-h-screen bg-base-200">
+        <Toast />
         <div class="navbar bg-base-100 shadow-sm">
             <div class="flex-1">
                 <Link :href="welcome()" class="flex items-center font-semibold px-5 text-xl text-primary">
@@ -30,7 +33,8 @@ defineProps({
                     {{ $page.props.site.name }}
                 </Link>
             </div>
-            <div class="flex gap-2">
+            <div class="flex gap-2 items-center">
+                <NotificationBell v-if="$page.props.auth.user" />
                 <div class="dropdown dropdown-end mr-2" v-if="$page.props.auth.user">
                     <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar"
                         v-if="$page.props.jetstream.managesProfilePhotos">
