@@ -12,25 +12,27 @@ const toast = useToast();
 const user = page.props.auth?.user;
 const unreadCount = computed(() => page.props.notifications ?? 0);
 
-useEchoNotification(
-    `App.Models.User.${user.id}`,
-    (notification) => {
-        if (typeof page.props.notifications === 'number') {
-            page.props.notifications++;
-        } else {
-            page.props.notifications = 1;
-        }
+if (user?.id) {
+    useEchoNotification(
+        `App.Models.User.${user.id}`,
+        (notification) => {
+            if (typeof page.props.notifications === 'number') {
+                page.props.notifications++;
+            } else {
+                page.props.notifications = 1;
+            }
 
-        console.log(notification);
+            console.log(notification);
 
-        toast.add({
-            severity: notification.severity || 'info',
-            summary: notification.title || 'New Notification',
-            detail: notification.message,
-            life: 5000,
-        });
-    },
-);
+            toast.add({
+                severity: notification.severity || 'info',
+                summary: notification.title || 'New Notification',
+                detail: notification.message,
+                life: 5000,
+            });
+        },
+    );
+}
 
 </script>
 
