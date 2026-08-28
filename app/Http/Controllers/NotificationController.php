@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\NotificationResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class NotificationController extends Controller
 {
@@ -35,10 +37,10 @@ class NotificationController extends Controller
             $query->whereNotNull('read_at');
         }
 
-        $notifications = $query->paginate($this->resolvePerPage($request))->withQueryString();
-
         return inertia('Notifications/Index', [
-            'notifications' => $notifications,
+            'list' => Inertia::defer(fn () => NotificationResource::collection(
+                $query->paginate($this->resolvePerPage($request))->withQueryString()
+            )),
             'filter' => $filter,
             'unread_count' => $user->unreadNotifications()->count(),
         ]);

@@ -3,6 +3,7 @@ import '../css/app.css';
 
 import { createInertiaApp } from '@inertiajs/vue3';
 import PrimeVue from 'primevue/config';
+import ToastService from 'primevue/toastservice';
 import axios from 'axios';
 import VueShortkey from 'vue-three-shortkey';
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -25,6 +26,7 @@ createInertiaApp({
     withApp(app) {
         app
             .use(VueShortkey)
+            .use(ToastService)
             .use(PrimeVue, {
                 theme: {
                     preset: DaisyPrimePreset,
