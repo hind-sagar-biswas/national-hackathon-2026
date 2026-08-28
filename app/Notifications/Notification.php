@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification as BaseNotification;
 
@@ -97,6 +98,22 @@ abstract class Notification extends BaseNotification implements ShouldQueue
             'action_text' => $this->getActionText(),
             'data' => $this->getNotificationData(),
         ];
+    }
+
+    /**
+     * Get the broadcast representation of the notification.
+     */
+    public function toBroadcast(object $notifiable): BroadcastMessage
+    {
+        return new BroadcastMessage([
+            'title' => $this->getNotificationTitle(),
+            'message' => $this->getNotificationMessage(),
+            'type' => $this->getNotificationType(),
+            'icon' => $this->getNotificationIcon(),
+            'action_url' => $this->getActionUrl(),
+            'action_text' => $this->getActionText(),
+            'data' => $this->getNotificationData(),
+        ]);
     }
 
     /**
