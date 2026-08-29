@@ -14,6 +14,7 @@ import {
     ArrowUpRight, 
     Clock, 
     Eye, 
+    EyeOff,
     HandCoins, 
     Landmark, 
     Lock, 
@@ -24,6 +25,7 @@ import {
     Wallet 
 } from 'lucide-vue-next';
 import { Column, DataTable } from 'primevue';
+import { computed, ref } from 'vue';
 
 const props = defineProps({
     account: Object,
@@ -36,78 +38,215 @@ defineOptions({
 });
 
 const { user } = useAuth();
+const showCardNumber = ref(false);
+
+// Real 3D Cursor Tilt & Glare State
+const cardRef = ref(null);
+const cardTransform = ref('perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)');
+const shineStyle = ref({
+    background: 'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 70%)',
+});
+
+const handleMouseMove = (e) => {
+    if (!cardRef.value) return;
+    const rect = cardRef.value.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    // Smooth real 3D tilt calculation based on cursor offset
+    const rotateX = ((centerY - y) / centerY) * 16;
+    const rotateY = ((x - centerX) / centerX) * 16;
+
+    cardTransform.value = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.03, 1.03, 1.03)`;
+
+    // Cursor-following light glare spot
+    const shineX = (x / rect.width) * 100;
+    const shineY = (y / rect.height) * 100;
+    shineStyle.value = {
+        background: `radial-gradient(circle at ${shineX.toFixed(1)}% ${shineY.toFixed(1)}%, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 65%)`,
+    };
+};
+
+const handleMouseLeave = () => {
+    cardTransform.value = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+    shineStyle.value = {
+        background: 'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 70%)',
+    };
+};
 
 const formatCurrency = (amountInCents) => {
     if (amountInCents === null || amountInCents === undefined) return '0.00';
     return (amountInCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
+
+// Deterministic 16-digit card number starting with 201 for each user
+const fullCardNumber = computed(() => {
+    const id = user.value?.id || props.account?.user_id || 1;
+    const s1 = String((id * 9301 + 49297) % 9000 + 1000);
+    const s2 = String((id * 49297 + 9301) % 9000 + 1000);
+    const s3 = String((id * 71253 + 13579) % 9000 + 1000);
+    return `201${s1.substring(1)} ${s2} ${s3} ${String((id * 31415 + 27182) % 9000 + 1000)}`;
+});
+
+// Hidden mode showing 4 digits at front and 2 digits at back (e.g. 2010 •••• •••• ••47)
+const maskedCardNumber = computed(() => {
+    const full = fullCardNumber.value;
+    const digits = full.replace(/\s+/g, '');
+    const front4 = digits.substring(0, 4);
+    const last2 = digits.substring(14, 16);
+    return `${front4} •••• •••• ••${last2}`;
+});
 </script>
 
 <template>
     <div class="p-5 space-y-6">
 
-        <!-- Top Account Balance Card & Quick Actions -->
+        <!-- Top Account Balance Card & Cursor-Driven 3D Shiny Debit Card Grid -->
         <div class="card bg-base-200 shadow-sm border border-base-300">
             <div class="card-body p-6">
-                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div class="flex flex-col xl:flex-row items-center justify-between gap-8">
                     
-                    <!-- Wallet Info -->
-                    <div class="space-y-2">
-                        <div class="flex items-center gap-2">
+                    <!-- Wallet Info & Quick Actions -->
+                    <div class="space-y-4 flex-1">
+                        <div class="flex items-center gap-3">
                             <span class="avatar placeholder">
-                                <div class="bg-primary text-primary-content rounded-full w-10  h-10 flex items-center justify-center">
-                                    <Wallet size="20" />
+                                <div class="bg-primary text-primary-content rounded-full w-12 h-12 flex items-center justify-center">
+                                    <Wallet size="24" />
                                 </div>
                             </span>
                             <div>
-                                <h2 class="text-sm font-semibold text-base-content/70">
-                                    Main Wallet Balance
+                                <h2 class="text-base font-bold text-base-content">
+                                    Main Wallet & Account Overview
                                 </h2>
-                                <p class="text-xs text-base-content/50">
-                                    Account Slug: <span class="font-mono font-semibold">{{ account?.slug ?? 'N/A' }}</span>
+                                <p class="text-xs text-base-content/60">
+                                    Account Slug: <span class="font-mono font-bold text-primary">{{ account?.slug ?? 'N/A' }}</span>
                                 </p>
                             </div>
                         </div>
 
                         <div class="flex items-baseline gap-2 pt-1">
-                            <span class="text-3xl font-extrabold text-base-content">
+                            <span class="text-4xl font-black text-base-content">
                                 {{ account?.cleared_balance?.formatted ?? '0.00' }}
                             </span>
-                            <span class="text-sm font-semibold text-base-content/60">
+                            <span class="text-base font-bold text-base-content/60">
                                 {{ account?.currency ?? 'BDT' }}
                             </span>
                         </div>
 
-                        <div class="flex flex-wrap gap-4 text-xs pt-2 text-base-content/70">
-                            <div>
-                                <span class="text-base-content/50">Available Balance:</span>
-                                <span class="font-semibold ms-1">{{ account?.available_balance?.formatted ?? '0.00' }} {{ account?.currency ?? 'BDT' }}</span>
+                        <div class="flex flex-wrap gap-4 text-xs text-base-content/70">
+                            <div class="bg-base-100 px-3 py-1.5 rounded-lg border border-base-300">
+                                <span class="text-base-content/60">Available Balance:</span>
+                                <span class="font-bold ms-1 text-base-content">{{ account?.available_balance?.formatted ?? '0.00' }} {{ account?.currency ?? 'BDT' }}</span>
                             </div>
-                            <div v-if="metrics?.total_held_amount > 0">
-                                <span class="text-base-content/50">Active Holds:</span>
-                                <span class="font-semibold text-warning ms-1">{{ formatCurrency(metrics?.total_held_amount) }} {{ account?.currency ?? 'BDT' }}</span>
+                            <div v-if="metrics?.total_held_amount > 0" class="bg-warning/10 text-warning border border-warning/20 px-3 py-1.5 rounded-lg">
+                                <span class="opacity-80">Active Holds:</span>
+                                <span class="font-bold ms-1">{{ formatCurrency(metrics?.total_held_amount) }} {{ account?.currency ?? 'BDT' }}</span>
                             </div>
+                        </div>
+
+                        <!-- Quick Actions Buttons Grid -->
+                        <div class="flex flex-wrap gap-2.5 items-center pt-2">
+                            <Button as="link" :href="transfersIndex()" color="primary" size="sm">
+                                <Send class="inline-block me-1" size="16" /> Transfer
+                            </Button>
+                            <Button as="link" :href="moneyRequestsIndex()" color="accent" size="sm">
+                                <HandCoins class="inline-block me-1" size="16" /> Request
+                            </Button>
+                            <Button as="link" :href="billSplitsIndex()" color="info" size="sm">
+                                <Users class="inline-block me-1" size="16" /> Bill Split
+                            </Button>
+                            <Button as="link" :href="depositsIndex()" color="secondary" size="sm">
+                                <PlusCircle class="inline-block me-1" size="16" /> Deposit
+                            </Button>
+                            <Button as="link" :href="loansIndex()" color="neutral" size="sm">
+                                <Landmark class="inline-block me-1" size="16" /> Loans
+                            </Button>
                         </div>
                     </div>
 
-                    <!-- Quick Actions Buttons Grid -->
-                    <div class="flex flex-wrap gap-3 items-center">
-                        <Button as="link" :href="transfersIndex()" color="primary" size="sm">
-                            <Send class="inline-block me-1" size="16" /> Transfer
-                        </Button>
-                        <Button as="link" :href="moneyRequestsIndex()" color="accent" size="sm">
-                            <HandCoins class="inline-block me-1" size="16" /> Request
-                        </Button>
-                        <Button as="link" :href="billSplitsIndex()" color="info" size="sm">
-                            <Users class="inline-block me-1" size="16" /> Bill Split
-                        </Button>
-                        <Button as="link" :href="depositsIndex()" color="secondary" size="sm">
-                            <PlusCircle class="inline-block me-1" size="16" /> Deposit
-                        </Button>
-                        <Button as="link" :href="loansIndex()" color="neutral" size="sm">
-                            <Landmark class="inline-block me-1" size="16" /> Loans
-                        </Button>
+                    <!-- Real Dynamic 3D Cursor Tilt Black Shiny Card -->
+                    <div class="flex-shrink-0 py-2 px-2">
+                        <div 
+                            ref="cardRef"
+                            @mousemove="handleMouseMove"
+                            @mouseleave="handleMouseLeave"
+                            :style="{ transform: cardTransform }"
+                            class="relative w-80 sm:w-96 rounded-2xl p-6 bg-black text-white shadow-[0_25px_50px_-12px_rgba(0,0,0,0.85)] border border-white/15 overflow-hidden transition-transform duration-100 ease-out cursor-pointer select-none bg-[radial-gradient(circle_at_bottom_left,#ffffff0c_35%,transparent_36%),radial-gradient(circle_at_top_right,#ffffff0c_35%,transparent_36%)] bg-[length:4.95em_4.95em]"
+                        >
+                            <!-- Dynamic Cursor Light Glare Reflection -->
+                            <div 
+                                class="absolute inset-0 pointer-events-none transition-all duration-75"
+                                :style="shineStyle"
+                            ></div>
+
+                            <!-- Metallic Glossy Sheen Overlay -->
+                            <div class="absolute inset-0 bg-linear-to-tr from-white/10 via-transparent to-white/5 pointer-events-none"></div>
+
+                            <div class="relative z-10 space-y-4">
+                                <!-- Card Header -->
+                                <div class="flex justify-between items-center">
+                                    <div class="font-bold tracking-widest text-xs uppercase opacity-90 flex items-center gap-2">
+                                        <span class="inline-block size-2 rounded-full bg-amber-400 animate-pulse"></span>
+                                        BANK OF LATVERIA
+                                    </div>
+                                    <div class="text-3xl opacity-20 font-serif">❁</div>
+                                </div>
+
+                                <!-- Golden SIM / EMV Smart Chip -->
+                                <div class="w-11 h-8 rounded-md bg-linear-to-tr from-amber-400 via-amber-300 to-yellow-500 border border-yellow-200/50 shadow-inner relative flex items-center justify-center overflow-hidden my-1">
+                                    <div class="absolute inset-x-0 h-[1px] bg-amber-800/40"></div>
+                                    <div class="absolute inset-y-0 w-[1px] bg-amber-800/40"></div>
+                                    <div class="size-4 border border-amber-800/40 rounded-xs"></div>
+                                </div>
+
+                                <!-- Card Number & Eye Toggle Button -->
+                                <div class="space-y-1">
+                                    <span class="text-[9px] uppercase tracking-wider opacity-40 font-bold block">CARD NUMBER</span>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <span class="text-base sm:text-lg font-mono tracking-wider font-bold opacity-95">
+                                            {{ showCardNumber ? fullCardNumber : maskedCardNumber }}
+                                        </span>
+
+                                        <button 
+                                            type="button" 
+                                            @click.stop="showCardNumber = !showCardNumber" 
+                                            class="p-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-colors focus:outline-none z-20"
+                                            :title="showCardNumber ? 'Hide Card Number' : 'Show Card Number'"
+                                        >
+                                            <EyeOff v-if="showCardNumber" class="size-4 text-warning" />
+                                            <Eye v-else class="size-4" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Card Footer: Holder, Valid From & Valid Till -->
+                                <div class="flex justify-between items-end pt-2 text-xs">
+                                    <div>
+                                        <div class="text-[9px] uppercase tracking-wider opacity-40 font-bold">CARD HOLDER</div>
+                                        <div class="text-sm font-bold tracking-wide uppercase text-white/90">
+                                            {{ user?.name || 'VALUED CUSTOMER' }}
+                                        </div>
+                                    </div>
+
+                                    <div class="flex gap-3 text-right">
+                                        <div>
+                                            <div class="text-[9px] uppercase tracking-wider opacity-40 font-bold">VALID FROM</div>
+                                            <div class="text-xs font-mono font-bold text-white/90">08/24</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-[9px] uppercase tracking-wider opacity-40 font-bold">VALID TILL</div>
+                                            <div class="text-xs font-mono font-bold text-white/90">08/29</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -272,4 +411,3 @@ const formatCurrency = (amountInCents) => {
 
     </div>
 </template>
-
