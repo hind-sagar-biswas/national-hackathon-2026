@@ -3,14 +3,24 @@ import Layout from '@/Layouts/AppLayout.vue';
 import { login, register, dashboard } from '@/routes';
 import { Link } from '@inertiajs/vue3';
 import {
-    Shield,
-    Users,
-    Bell,
+    ShieldCheck,
+    ArrowRight,
+    Wallet,
+    HandCoins,
+    Receipt,
+    Split,
+    Scale,
     Lock,
     Zap,
-    BarChart3,
     CheckCircle2,
-    ArrowRight
+    Building2,
+    ShieldAlert,
+    CreditCard,
+    TrendingUp,
+    Send,
+    Check,
+    Globe,
+    Layers
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -23,103 +33,268 @@ const props = defineProps({
 });
 
 defineOptions({
-    layout: (props) => [Layout, { title: 'Welcome', canLogin: props.canLogin, canRegister: props.canRegister }],
-})
+    layout: (props) => [Layout, { title: 'National Digital Banking & Micro-Credit', canLogin: props.canLogin, canRegister: props.canRegister }],
+});
 
-const features = [
+const bankingServices = [
     {
-        title: 'Role-Based Access Control',
-        description: 'Fine-grained permissions and role management system powered by Spatie.',
-        icon: Shield,
+        title: 'Instant P2P Money Transfers',
+        description: 'Zero-latency wallet-to-wallet transfers with automated fraud detection and OTP verification.',
+        icon: Wallet,
+        badge: 'Instant Settlement',
     },
     {
-        title: 'User Management',
-        description: 'Comprehensive user administration with filtering, search, and status controls.',
-        icon: Users,
+        title: 'Peer-to-Peer Micro-Credit & Loans',
+        description: 'Direct peer loan requests with repayment tracking, due date reminders, and lender debt waiving.',
+        icon: HandCoins,
+        badge: 'Micro-Credit',
     },
     {
-        title: 'Real-Time Notifications',
-        description: 'Built-in notification system with API endpoints and real-time updates.',
-        icon: Bell,
+        title: 'Smart Bill Splitting Engine',
+        description: 'Split restaurant bills or shared expenses among group members with automated invitations.',
+        icon: Split,
+        badge: 'Group Finance',
     },
     {
-        title: 'Two-Factor Authentication',
-        description: 'Secure authentication with 2FA support using TOTP and recovery codes.',
-        icon: Lock,
+        title: 'Money Requests & Pre-Hold',
+        description: 'Send invoices with optional fund pre-reservations to guarantee settlement upon approval.',
+        icon: Receipt,
+        badge: 'Guaranteed Funds',
     },
     {
-        title: 'Modern Stack',
-        description: 'Laravel 13, Vue 3, Inertia.js, Tailwind CSS v4, and daisyUI components.',
-        icon: Zap,
+        title: 'Double-Entry Ledger Audit',
+        description: 'Cryptographically verified debit/credit balance sheets for complete financial transparency.',
+        icon: ShieldCheck,
+        badge: 'Audit Verified',
     },
     {
-        title: 'Analytics Ready',
-        description: 'Built-in pagination, rate limiting, and structured API responses.',
-        icon: BarChart3,
+        title: 'Zero-Sum Mathematical Reconciliation',
+        description: 'Real-time background integrity checks ensuring platform liabilities and reserves balance to zero.',
+        icon: Scale,
+        badge: 'Core Engine',
     },
+];
+
+const securityFeatures = [
+    '256-Bit Financial Encryption & Idempotency Key Protection',
+    'Automated Risk Engine & Suspicious Transaction OTP Challenges',
+    'Real-time WebSocket Push Notifications powered by Laravel Reverb',
+    'Spatie Fine-Grained Role & Permission Access Controls',
 ];
 </script>
 
 <template>
-    <div class="bg-linear-to-b from-base-200 to-base-100">
-        <!-- Hero Section -->
-        <section class="py-20 px-4 sm:px-6 lg:px-8">
-            <div class="max-w-5xl mx-auto text-center">
-                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-base-content mb-6">
-                    Modern Admin Template for Laravel
-                </h1>
-                <p class="text-lg sm:text-xl text-base-content/75 mb-10 max-w-2xl mx-auto">
-                    A production-ready starter kit with authentication, role-based access control, and a sleek Vue 3
-                    interface. Build your next admin panel faster.
-                </p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Link v-if="$page.props.auth.user" :href="dashboard()" class="btn btn-soft btn-lg">
-                        Go to Dashboard
-                    </Link>
-                    <template v-else>
-                        <Link v-if="canRegister" :href="register()" class="btn btn-primary btn-lg">
-                            Get Started
-                            <ArrowRight class="size-5" />
-                        </Link>
-                        <Link v-if="canLogin" :href="login()" class="btn btn-soft btn-lg">
-                            Sign In
-                        </Link>
-                    </template>
+    <div class="bg-base-100 text-base-content min-h-screen font-sans">
+        
+        <!-- Clean, Professional Hero Section (No Gradient Background) -->
+        <section class="bg-base-100 border-b border-base-200 py-16 lg:py-24 px-4 sm:px-6 lg:px-8">
+            <div class="max-w-7xl mx-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                    
+                    <!-- Left Column: Professional Copy & Actions (7 Cols) -->
+                    <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+                        
+                        <!-- Minimalist Badge -->
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-base-200 border border-base-300 text-xs font-semibold text-base-content/80">
+                            <ShieldCheck class="size-4 text-primary" />
+                            <span>National Core Banking & Micro-Credit Portal</span>
+                        </div>
+
+                        <!-- Solid Clean Headline -->
+                        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-base-content tracking-tight leading-tight">
+                            Core Banking & Peer-to-Peer Micro-Credit Engine
+                        </h1>
+
+                        <!-- Clean Subtitle -->
+                        <p class="text-base sm:text-lg text-base-content/75 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                            A secure, audited digital banking platform featuring instant wallet transfers, micro-credit loans, group bill splits, and double-entry balance sheet reconciliation.
+                        </p>
+
+                        <!-- Action Buttons -->
+                        <div class="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start items-center pt-2">
+                            <Link v-if="$page.props.auth.user" :href="dashboard()" class="btn btn-primary btn-md sm:btn-lg font-semibold px-6 w-full sm:w-auto">
+                                Go to Dashboard
+                                <ArrowRight class="size-4 ms-1" />
+                            </Link>
+                            <template v-else>
+                                <Link v-if="canRegister" :href="register()" class="btn btn-primary btn-md sm:btn-lg font-semibold px-6 w-full sm:w-auto">
+                                    Open Free Account
+                                    <ArrowRight class="size-4 ms-1" />
+                                </Link>
+                                <Link v-if="canLogin" :href="login()" class="btn btn-outline btn-md sm:btn-lg font-semibold px-6 w-full sm:w-auto">
+                                    Sign In
+                                </Link>
+                            </template>
+                        </div>
+
+                        <!-- Clean Key Metrics -->
+                        <div class="pt-8 grid grid-cols-3 gap-6 max-w-lg mx-auto lg:mx-0 border-t border-base-200">
+                            <div>
+                                <span class="block text-xl font-bold text-base-content">0.00 BDT</span>
+                                <span class="text-xs text-base-content/60">Discrepancy</span>
+                            </div>
+                            <div>
+                                <span class="block text-xl font-bold text-base-content">Zero-Sum</span>
+                                <span class="text-xs text-base-content/60">Ledger Audit</span>
+                            </div>
+                            <div>
+                                <span class="block text-xl font-bold text-base-content">256-Bit</span>
+                                <span class="text-xs text-base-content/60">Encryption</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Right Column: Professional Financial Card Preview (5 Cols) -->
+                    <div class="lg:col-span-5">
+                        <div class="bg-base-200/60 border border-base-300 p-6 rounded-xl shadow-xs space-y-5">
+                            
+                            <!-- Header Bar -->
+                            <div class="flex items-center justify-between border-b border-base-300/80 pb-4">
+                                <div class="flex items-center gap-2">
+                                    <Building2 class="size-5 text-primary" />
+                                    <span class="font-bold text-sm text-base-content">Wallet Account Overview</span>
+                                </div>
+                                <span class="badge badge-success badge-sm font-semibold">VERIFIED</span>
+                            </div>
+
+                            <!-- Balance Card -->
+                            <div class="bg-base-100 border border-base-300 p-4 rounded-lg space-y-1">
+                                <span class="text-xs text-base-content/60 block font-medium">Cleared Ledger Balance</span>
+                                <div class="flex justify-between items-baseline">
+                                    <span class="text-2xl font-bold text-base-content">124,850.00 BDT</span>
+                                    <span class="text-xs text-success font-semibold flex items-center gap-0.5">
+                                        <TrendingUp class="size-3.5 inline" /> +12.4%
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Recent Transaction Mini List -->
+                            <div class="space-y-2">
+                                <span class="text-xs font-semibold text-base-content/60 block">Recent System Activity</span>
+
+                                <div class="flex items-center justify-between p-3 rounded-lg bg-base-100 border border-base-300/80">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="bg-success/10 text-success p-1.5 rounded">
+                                            <HandCoins class="size-4" />
+                                        </div>
+                                        <div>
+                                            <span class="text-xs font-semibold block text-base-content">Money Request Settled</span>
+                                            <span class="text-[10px] text-base-content/50">Ref: TRX-998412</span>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs font-bold text-success">+5,000.00 BDT</span>
+                                </div>
+
+                                <div class="flex items-center justify-between p-3 rounded-lg bg-base-100 border border-base-300/80">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="bg-primary/10 text-primary p-1.5 rounded">
+                                            <Send class="size-4" />
+                                        </div>
+                                        <div>
+                                            <span class="text-xs font-semibold block text-base-content">P2P Wallet Transfer</span>
+                                            <span class="text-[10px] text-base-content/50">Ref: TRX-110293</span>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs font-bold text-error">-1,250.00 BDT</span>
+                                </div>
+                            </div>
+
+                            <!-- Footer Status -->
+                            <div class="pt-3 border-t border-base-300/80 flex items-center justify-between text-xs text-base-content/60">
+                                <span>Zero-Sum Invariant Check</span>
+                                <span class="font-mono font-bold text-success">PASSED (0.00)</span>
+                            </div>
+
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </section>
 
-        <!-- Features Section -->
-        <section class="py-20 px-4 sm:px-6 lg:px-8 bg-base-100">
+        <!-- Services Section -->
+        <section class="py-20 px-4 sm:px-6 lg:px-8 bg-base-200/40">
             <div class="max-w-6xl mx-auto">
                 <div class="text-center mb-16">
-                    <h2 class="text-3xl sm:text-4xl font-bold text-base-content mb-4">
-                        Powerful Features Out of the Box
+                    <h2 class="text-3xl font-bold text-base-content mb-3">
+                        Comprehensive Digital Banking Services
                     </h2>
-                    <p class="text-base-content/70 text-lg max-w-2xl mx-auto">
-                        Everything you need to build production-grade admin applications
+                    <p class="text-base-content/70 text-base max-w-2xl mx-auto">
+                        Engineered with mathematical precision, strict security controls, and intuitive financial tools for everyday transactions.
                     </p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-                    <div v-for="feature in features" :key="feature.title"
-                        class="card bg-base-200 shadow-sm hover:shadow-md transition-shadow">
-                        <div class="card-body">
-                            <div class="flex items-start gap-4">
-                                <div class="shrink-0">
-                                    <div
-                                        class="flex items-center justify-center h-12 w-12 rounded-lg bg-primary/10 text-primary">
-                                        <component :is="feature.icon" class="size-6" />
-                                    </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div 
+                        v-for="service in bankingServices" 
+                        :key="service.title"
+                        class="card bg-base-100 shadow-xs border border-base-300"
+                    >
+                        <div class="card-body p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-10 h-10 rounded-lg bg-base-200 text-primary flex items-center justify-center">
+                                    <component :is="service.icon" class="size-5" />
                                 </div>
-                                <div>
-                                    <h3 class="card-title text-lg mb-2">
-                                        {{ feature.title }}
-                                    </h3>
-                                    <p class="text-base-content/70">
-                                        {{ feature.description }}
-                                    </p>
-                                </div>
+                                <span class="badge badge-sm badge-outline font-medium">{{ service.badge }}</span>
+                            </div>
+                            <h3 class="card-title text-base font-bold text-base-content mb-2">
+                                {{ service.title }}
+                            </h3>
+                            <p class="text-xs text-base-content/70 leading-relaxed">
+                                {{ service.description }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Security & Architecture Section -->
+        <section class="py-20 px-4 sm:px-6 lg:px-8 bg-base-100">
+            <div class="max-w-5xl mx-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-base-200 text-base-content/80 font-semibold text-xs mb-4">
+                            <ShieldAlert class="size-4 text-warning" /> Security & Compliance First
+                        </div>
+                        <h2 class="text-3xl font-bold text-base-content mb-4">
+                            Built for Enterprise Banking & Integrity
+                        </h2>
+                        <p class="text-base-content/75 text-sm mb-6 leading-relaxed">
+                            Every financial mutation is protected by idempotency middleware to eliminate double-spend attacks, while our risk engine automatically triggers OTP verification when unusual transfer patterns are detected.
+                        </p>
+
+                        <div class="space-y-3">
+                            <div v-for="item in securityFeatures" :key="item" class="flex gap-3 items-start">
+                                <CheckCircle2 class="size-5 text-success shrink-0 mt-0.5" />
+                                <span class="text-sm font-medium text-base-content/85">{{ item }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visual Security Card -->
+                    <div class="bg-base-200/60 border border-base-300 p-6 rounded-xl shadow-xs space-y-4">
+                        <div class="flex items-center justify-between border-b border-base-300 pb-4">
+                            <div class="flex items-center gap-2">
+                                <Building2 class="size-5 text-primary" />
+                                <span class="font-bold text-sm">General Ledger Audit Status</span>
+                            </div>
+                            <span class="badge badge-success badge-sm font-semibold">VERIFIED</span>
+                        </div>
+
+                        <div class="space-y-2 text-xs font-mono">
+                            <div class="flex justify-between">
+                                <span class="text-base-content/60">Platform Equity:</span>
+                                <span class="font-bold text-base-content">SYS-EQUITY (Balanced)</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-base-content/60">Double-Entry Check:</span>
+                                <span class="font-bold text-success">Passed (0 Discrepancy)</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-base-content/60">Idempotency Guard:</span>
+                                <span class="font-bold text-info">Active (X-Idempotency-Key)</span>
                             </div>
                         </div>
                     </div>
@@ -127,115 +302,8 @@ const features = [
             </div>
         </section>
 
-        <!-- Highlights Section -->
-        <section class="py-20 px-4 sm:px-6 lg:px-8">
-            <div class="max-w-5xl mx-auto">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="text-center">
-                        <div class="text-4xl font-bold text-primary mb-2">13</div>
-                        <p class="text-base-content/70">Laravel 13 Foundation</p>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-4xl font-bold text-primary mb-2">100%</div>
-                        <p class="text-base-content/70">Out of the Box</p>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-4xl font-bold text-primary mb-2">100%</div>
-                        <p class="text-base-content/70">Fully Customizable</p>
-                    </div>
-                </div>
-            </div>
-        </section>
+        <!-- Final CTA Banner -->
+     
 
-        <!-- Tech Stack Section -->
-        <section class="py-20 px-4 sm:px-6 lg:px-8 bg-base-200">
-            <div class="max-w-5xl mx-auto">
-                <h2 class="text-3xl font-bold text-base-content mb-12 text-center">
-                    Built with Modern Technologies
-                </h2>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="bg-base-100 rounded-lg p-6 text-center">
-                        <div class="font-semibold text-base-content mb-2">Laravel 13</div>
-                        <p class="text-sm text-base-content/60">Backend Framework</p>
-                    </div>
-                    <div class="bg-base-100 rounded-lg p-6 text-center">
-                        <div class="font-semibold text-base-content mb-2">Vue 3</div>
-                        <p class="text-sm text-base-content/60">Frontend Framework</p>
-                    </div>
-                    <div class="bg-base-100 rounded-lg p-6 text-center">
-                        <div class="font-semibold text-base-content mb-2">Inertia</div>
-                        <p class="text-sm text-base-content/60">SPA Framework</p>
-                    </div>
-                    <div class="bg-base-100 rounded-lg p-6 text-center">
-                        <div class="font-semibold text-base-content mb-2">Tailwind CSS</div>
-                        <p class="text-sm text-base-content/60">Styling & daisyUI</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Benefits Section -->
-        <section class="py-20 px-4 sm:px-6 lg:px-8">
-            <div class="max-w-5xl mx-auto">
-                <h2 class="text-3xl font-bold text-base-content mb-12 text-center">
-                    Why Choose This Template
-                </h2>
-                <div class="space-y-4">
-                    <div class="flex gap-4 items-start">
-                        <CheckCircle2 class="size-6 text-primary shrink-0 mt-1" />
-                        <div>
-                            <h3 class="font-semibold text-base-content">Production Ready</h3>
-                            <p class="text-base-content/70">Includes comprehensive test coverage and best practices</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-4 items-start">
-                        <CheckCircle2 class="size-6 text-primary shrink-0 mt-1" />
-                        <div>
-                            <h3 class="font-semibold text-base-content">Fully Documented</h3>
-                            <p class="text-base-content/70">Clear setup instructions and comprehensive README</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-4 items-start">
-                        <CheckCircle2 class="size-6 text-primary shrink-0 mt-1" />
-                        <div>
-                            <h3 class="font-semibold text-base-content">Developer Friendly</h3>
-                            <p class="text-base-content/70">Clean code structure and easy to understand patterns</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-4 items-start">
-                        <CheckCircle2 class="size-6 text-primary shrink-0 mt-1" />
-                        <div>
-                            <h3 class="font-semibold text-base-content">Active Updates</h3>
-                            <p class="text-base-content/70">Maintained with latest Laravel and Vue versions</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- CTA Section -->
-        <section class="py-20 px-4 sm:px-6 lg:px-8 bg-primary/5">
-            <div class="max-w-3xl mx-auto text-center">
-                <h2 class="text-3xl sm:text-4xl font-bold text-base-content mb-6">
-                    Ready to build something great?
-                </h2>
-                <p class="text-lg text-base-content/70 mb-10">
-                    Start building your admin panel today with this powerful template.
-                </p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Link v-if="$page.props.auth.user" :href="dashboard()" class="btn btn-primary btn-lg">
-                        Go to Dashboard
-                    </Link>
-                    <template v-else>
-                        <Link v-if="canRegister" :href="register()" class="btn btn-primary btn-lg">
-                            Create Account
-                        </Link>
-                        <Link v-if="canLogin" :href="login()" class="btn btn-outline btn-lg">
-                            Sign In
-                        </Link>
-                    </template>
-                </div>
-            </div>
-        </section>
     </div>
 </template>
