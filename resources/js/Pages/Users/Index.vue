@@ -84,7 +84,11 @@ const toggleUserStatus = (user) => {
                         </span>
                     </template>
                 </Column>
-                <Column field="created_at" header="Joined" />
+                <Column field="created_at" header="Joined">
+                    <template #body="slotProps">
+                        {{ slotProps.data.created_at?.formatted }}
+                    </template>
+                </Column>
                 <Column field="view" header="View">
                     <template #body="slotProps">
                         <Button as="link" :href="show({ user: slotProps.data.id })" color="secondary" size="sm">
