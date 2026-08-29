@@ -8,6 +8,7 @@ Boilerplate generated from [https://github.com/hind-sagar-biswas/admin-template]
 - Database: PostgreSQL with PGBouncer
 - Frontend: Vite + Tailwind + daisyUI
 - Cache: Redis (Valkey)
+- Socket: Reverb + Echo
 
 ## What This Template Includes
 
@@ -18,7 +19,6 @@ Boilerplate generated from [https://github.com/hind-sagar-biswas/admin-template]
 - Notifications page and authenticated notifications API
 - Tailwind CSS v4 + daisyUI as the default UI layer
 - PrimeVue available for complex components
-- Pest test setup and Laravel Pint formatting workflow
 
 ## Tech Stack
 
