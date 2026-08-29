@@ -6,6 +6,7 @@ use App\Enums\AccountOwner;
 use App\Enums\AccountType;
 use App\Enums\HoldStatus;
 use Database\Factories\AccountFactory;
+use HindBiswas\ModelUtils\Traits\Filterable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +15,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Account extends Model
 {
     /** @use HasFactory<AccountFactory> */
+    use Filterable;
+
     use HasFactory;
 
     protected $fillable = [
@@ -25,6 +28,22 @@ class Account extends Model
         'available_balance',
         'currency',
         'is_system',
+    ];
+
+    protected array $filterable = [
+        'owner_type',
+        'category',
+        'is_system',
+        'user_id',
+        'currency',
+        'user.email',
+    ];
+
+    protected array $searchable = [
+        'slug',
+        'user.name',
+        'user.email',
+        'user.phone',
     ];
 
     protected function casts(): array

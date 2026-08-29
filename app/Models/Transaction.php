@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\TransactionType;
+use HindBiswas\ModelUtils\Traits\Filterable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Transaction extends Model
 {
+    use Filterable;
     use HasUlids;
 
     protected $fillable = [
@@ -19,6 +21,20 @@ class Transaction extends Model
         'idempotency_key',
         'initiated_by',
         'metadata',
+    ];
+
+    protected array $filterable = [
+        'type',
+        'initiated_by',
+        'initiator.email',
+    ];
+
+    protected array $searchable = [
+        'reference',
+        'idempotency_key',
+        'initiator.name',
+        'initiator.email',
+        'initiator.phone',
     ];
 
     protected function casts(): array

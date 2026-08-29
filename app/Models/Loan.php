@@ -3,12 +3,15 @@
 namespace App\Models;
 
 use App\Enums\LoanStatus;
+use HindBiswas\ModelUtils\Traits\Filterable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Loan extends Model
 {
+    use Filterable;
+
     protected $fillable = [
         'lender_user_id',
         'borrower_user_id',
@@ -18,6 +21,23 @@ class Loan extends Model
         'disbursement_txn_id',
         'due_at',
         'note',
+    ];
+
+    protected array $filterable = [
+        'status',
+        'lender_user_id',
+        'borrower_user_id',
+        'lender.email',
+        'borrower.email',
+    ];
+
+    protected array $searchable = [
+        'note',
+        'lender.name',
+        'lender.email',
+        'borrower.name',
+        'borrower.email',
+        'disbursementTransaction.reference',
     ];
 
     protected function casts(): array

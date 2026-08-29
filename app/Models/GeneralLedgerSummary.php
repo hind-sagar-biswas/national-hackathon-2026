@@ -3,16 +3,21 @@
 namespace App\Models;
 
 use App\Enums\AccountType;
+use HindBiswas\ModelUtils\Traits\Filterable;
 use Illuminate\Database\Eloquent\Model;
 
 class GeneralLedgerSummary extends Model
 {
-    protected $table = 'general_ledger_summary';
+    use Filterable;
 
     protected $fillable = [
         'category',
         'total',
         'as_of',
+    ];
+
+    protected array $filterable = [
+        'category',
     ];
 
     protected function casts(): array

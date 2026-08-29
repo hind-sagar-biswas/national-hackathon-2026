@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use App\Enums\RequestStatus;
+use HindBiswas\ModelUtils\Traits\Filterable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MoneyRequest extends Model
 {
+    use Filterable;
+
     protected $fillable = [
         'requester_account_id',
         'payer_account_id',
@@ -16,6 +19,21 @@ class MoneyRequest extends Model
         'hold_id',
         'transaction_id',
         'expires_at',
+    ];
+
+    protected array $filterable = [
+        'status',
+        'requester_account_id',
+        'payer_account_id',
+        'requesterAccount.user_id',
+        'payerAccount.user_id',
+    ];
+
+    protected array $searchable = [
+        'requesterAccount.user.name',
+        'requesterAccount.user.email',
+        'payerAccount.user.name',
+        'payerAccount.user.email',
     ];
 
     protected function casts(): array

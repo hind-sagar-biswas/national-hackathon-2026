@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\HoldStatus;
+use HindBiswas\ModelUtils\Traits\Filterable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Hold extends Model
 {
+    use Filterable;
 
     protected $fillable = [
         'account_id',
@@ -20,6 +22,20 @@ class Hold extends Model
         'status',
         'resolved_at',
     ];
+
+    protected array $filterable = [
+        'status',
+        'account_id',
+        'reference_type',
+        'account.user_id',
+    ];
+
+    protected array $searchable = [
+        'reason',
+        'account.user.name',
+        'account.user.email',
+    ];
+
     protected function casts(): array
     {
         return [
