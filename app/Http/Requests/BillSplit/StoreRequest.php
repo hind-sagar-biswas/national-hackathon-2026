@@ -4,6 +4,7 @@ namespace App\Http\Requests\BillSplit;
 
 use App\Enums\BillSplitMode;
 use App\Enums\Permission;
+use App\Models\User;
 use App\Rules\EnumClassRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -12,6 +13,25 @@ class StoreRequest extends FormRequest
     public function authorize(): bool
     {
         return $this->user()?->hasPermissionTo(Permission::CREATE_BILL_SPLITS) ?? false;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $participants = $this->input('participants');
+        if (is_array($participants)) {
+            foreach ($participants as $index => $participant) {
+                if (empty($participant['user_id']) && ! empty($participant['identifier'])) {
+                    $identifier = trim($participant['identifier']);
+                    $foundUser = User::where('email', $identifier)
+                        ->orWhere('phone', $identifier)
+                        ->first();
+                    if ($foundUser) {
+                        $participants[$index]['user_id'] = $foundUser->id;
+                    }
+                }
+            }
+            $this->merge(['participants' => $participants]);
+        }
     }
 
     public function rules(): array
@@ -37,6 +57,8 @@ class StoreRequest extends FormRequest
             'title.required' => 'Please provide a title for the bill split.',
             'total_amount.min' => 'Total bill amount must be at least 10 BDT.',
             'participants.min' => 'Please select at least 1 other participant to split the bill with.',
+            'participants.*.user_id.exists' => 'One or more participants could not be found with the provided email or phone.',
+            'participants.*.user_id.required' => 'Please specify valid participants with registered email or phone.',
         ];
     }
 }

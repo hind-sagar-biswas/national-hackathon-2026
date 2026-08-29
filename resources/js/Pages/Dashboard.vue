@@ -2,6 +2,7 @@
 import Button from '@/Components/Buttons/Button.vue';
 import { useAuth } from '@/Composables';
 import DashboardLayout from '@/Layouts/DashboardLayout.vue';
+import { index as billSplitsIndex } from '@/routes/bill-splits';
 import { index as depositsIndex } from '@/routes/deposits';
 import { index as loansIndex } from '@/routes/loans';
 import { index as moneyRequestsIndex } from '@/routes/money-requests';
@@ -19,6 +20,7 @@ import {
     PlusCircle, 
     Receipt, 
     Send, 
+    Users, 
     Wallet 
 } from 'lucide-vue-next';
 import { Column, DataTable } from 'primevue';
@@ -95,6 +97,9 @@ const formatCurrency = (amountInCents) => {
                         </Button>
                         <Button as="link" :href="moneyRequestsIndex()" color="accent" size="sm">
                             <HandCoins class="inline-block me-1" size="16" /> Request
+                        </Button>
+                        <Button as="link" :href="billSplitsIndex()" color="info" size="sm">
+                            <Users class="inline-block me-1" size="16" /> Bill Split
                         </Button>
                         <Button as="link" :href="depositsIndex()" color="secondary" size="sm">
                             <PlusCircle class="inline-block me-1" size="16" /> Deposit

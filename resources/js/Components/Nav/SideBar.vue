@@ -12,6 +12,7 @@ import transfers from '@/routes/transfers';
 import deposits from '@/routes/deposits';
 import loans from '@/routes/loans';
 import moneyRequests from '@/routes/money-requests';
+import billSplits from '@/routes/bill-splits';
 import transactions from '@/routes/transactions';
 import adminDeposits from '@/routes/admin/deposits';
 import adminHolds from '@/routes/admin/holds';
@@ -34,6 +35,7 @@ const userNavItems = [
     { title: 'Deposits', route: deposits.index(), icon: 'wallet', permission: 'view-deposits' },
     { title: 'P2P Loans', route: loans.index(), icon: 'hand-holding-dollar', permission: 'view-loans' },
     { title: 'Money Requests', route: moneyRequests.index(), icon: 'hand-holding-hand', permission: 'view-money-requests' },
+    { title: 'Bill Splits', route: billSplits.index(), icon: 'receipt', permission: 'view-bill-splits' },
     { title: 'Transactions', route: transactions.index(), icon: 'receipt', permission: 'view-transactions' },
 ];
 
