@@ -62,7 +62,7 @@ const { filters, reset } = useFilter(index(), props.filters, {
 
             <!-- Transactions DataTable -->
             <div class="overflow-x-auto shadow-md rounded-md">
-                <DataTable :value="list.data" tableStyle="min-width: 50rem" class="bg-base-100">
+                <DataTable :value="list.data" tableStyle="min-width: 55rem" class="bg-base-100">
                     <Column field="reference" header="Reference ID">
                         <template #body="slotProps">
                             <span class="font-mono text-xs font-semibold text-primary">
@@ -75,11 +75,34 @@ const { filters, reset } = useFilter(index(), props.filters, {
                             <span class="badge badge-sm uppercase font-bold" :class="{
                                 'badge-primary': slotProps.data.type === 'transfer',
                                 'badge-success': slotProps.data.type === 'deposit',
-                                'badge-warning': slotProps.data.type === 'money_request',
+                                'badge-warning': slotProps.data.type === 'money_request' || slotProps.data.type === 'request_settlement',
                                 'badge-info': slotProps.data.type === 'loan',
-                                'badge-neutral': !['transfer', 'deposit', 'money_request', 'loan'].includes(slotProps.data.type)
+                                'badge-neutral': !['transfer', 'deposit', 'money_request', 'request_settlement', 'loan'].includes(slotProps.data.type)
                             }">
                                 {{ slotProps.data.type?.replace('_', ' ') }}
+                            </span>
+                        </template>
+                    </Column>
+                    <Column field="user_direction" header="Direction">
+                        <template #body="slotProps">
+                            <span v-if="slotProps.data.user_direction" class="badge badge-sm font-bold uppercase" :class="{
+                                'badge-error': slotProps.data.user_direction === 'debit',
+                                'badge-success': slotProps.data.user_direction === 'credit',
+                            }">
+                                {{ slotProps.data.user_direction === 'debit' ? 'Debit (-)' : 'Credit (+)' }}
+                            </span>
+                            <span v-else class="text-xs text-base-content/50">—</span>
+                        </template>
+                    </Column>
+                    <Column field="amount" header="Amount">
+                        <template #body="slotProps">
+                            <span class="font-extrabold" :class="{
+                                'text-error': slotProps.data.user_direction === 'debit',
+                                'text-success': slotProps.data.user_direction === 'credit',
+                                'text-base-content': !slotProps.data.user_direction,
+                            }">
+                                {{ slotProps.data.user_direction === 'debit' ? '-' : (slotProps.data.user_direction === 'credit' ? '+' : '') }}
+                                {{ slotProps.data.amount?.formatted ?? '0.00' }} BDT
                             </span>
                         </template>
                     </Column>

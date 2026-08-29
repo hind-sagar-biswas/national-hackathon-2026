@@ -68,9 +68,16 @@ const showCreateModal = ref(false);
 const { form, submit, resetKey } = useIdempotentForm({
     payer: '',
     amount: '',
+    type: 'standard',
     expires_in_days: 3,
+    due_at: '',
+    note: '',
     pre_hold: false,
 });
+
+// Idempotent forms for Approve and Decline actions
+const approveForm = useIdempotentForm();
+const rejectForm = useIdempotentForm();
 
 const handleCreateSubmit = () => {
     submit('post', store(), {
@@ -83,32 +90,27 @@ const handleCreateSubmit = () => {
 };
 
 const handleApprove = (reqItem) => {
-    if (confirm(`Approve and pay ${reqItem.amount?.formatted ?? reqItem.amount} BDT for Money Request #${reqItem.id}?`)) {
-        const idempotencyKey = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'idemp_' + Date.now() + '_' + Math.random().toString(36).substring(2);
-        router.post(approve({ money_request: reqItem.id }), {}, {
-            headers: {
-                'X-Idempotency-Key': idempotencyKey,
-            },
-            preserveScroll: true,
-        });
-    }
+    approveForm.resetKey();
+    approveForm.submit('post', approve(reqItem.id), {
+        preserveScroll: true,
+    });
 };
 
 const handleReject = (reqItem) => {
-    if (confirm(`Decline Money Request #${reqItem.id}?`)) {
-        router.post(reject({ money_request: reqItem.id }), {}, { preserveScroll: true });
-    }
+    rejectForm.resetKey();
+    rejectForm.submit('post', reject(reqItem.id), {
+        preserveScroll: true,
+    });
 };
 
 const handleCancel = (reqItem) => {
-    if (confirm(`Cancel your Money Request #${reqItem.id}?`)) {
-        router.delete(cancelRequest({ money_request: reqItem.id }), { preserveScroll: true });
-    }
+    router.delete(cancelRequest(reqItem.id), { preserveScroll: true });
 };
 
 const openCreateModal = () => {
     resetKey();
     form.reset();
+    form.type = 'standard';
     form.expires_in_days = 3;
     showCreateModal.value = true;
 };
@@ -127,16 +129,16 @@ const openCreateModal = () => {
                         </div>
                         <div>
                             <h1 class="text-xl font-bold text-base-content">
-                                Request Money & Invoicing
+                                Money & Loan Requests
                             </h1>
                             <p class="text-xs text-base-content/60">
-                                Send payment requests to other users or approve incoming funds requests.
+                                Send standard payment or loan requests to other users or approve incoming requests.
                             </p>
                         </div>
                     </div>
 
                     <Button color="primary" @click="openCreateModal">
-                        <PlusCircle class="inline-block me-1" size="16" /> Request Money
+                        <PlusCircle class="inline-block me-1" size="16" /> Create Request
                     </Button>
                 </div>
             </div>
@@ -195,10 +197,17 @@ const openCreateModal = () => {
                             </span>
                         </template>
                     </Column>
+                    <Column field="type" header="Type">
+                        <template #body="slotProps">
+                            <span class="badge badge-sm uppercase font-bold" :class="slotProps.data.type === 'loan' ? 'badge-info' : 'badge-neutral'">
+                                {{ slotProps.data.type === 'loan' ? 'P2P Loan' : 'Standard' }}
+                            </span>
+                        </template>
+                    </Column>
                     <Column header="Participant">
                         <template #body="slotProps">
                             <span class="text-sm font-medium">
-                                {{ filters.tab === 'incoming' ? (slotProps.data.requesterAccount?.user?.name || 'Requester') : (slotProps.data.payerAccount?.user?.name || 'Payer') }}
+                                {{ filters.tab === 'incoming' ? (slotProps.data.requester_account?.user?.name || 'Requester') : (slotProps.data.payer_account?.user?.name || 'Payer') }}
                             </span>
                         </template>
                     </Column>
@@ -221,21 +230,35 @@ const openCreateModal = () => {
                             </span>
                         </template>
                     </Column>
-                    <Column field="expires_at" header="Expires At">
+                    <Column field="expires_at" header="Expiry / Due Date">
                         <template #body="slotProps">
-                            <span class="text-xs text-base-content/70">
-                                {{ slotProps.data.expires_at?.formatted || 'No Expiry' }}
-                            </span>
+                            <div class="text-xs space-y-0.5">
+                                <div><strong class="text-base-content/60">Expires:</strong> {{ slotProps.data.expires_at?.formatted || 'No Expiry' }}</div>
+                                <div v-if="slotProps.data.due_at"><strong class="text-info">Due:</strong> {{ slotProps.data.due_at?.formatted }}</div>
+                            </div>
                         </template>
                     </Column>
                     <Column header="Actions">
                         <template #body="slotProps">
                             <div class="flex items-center gap-1">
                                 <template v-if="filters.tab === 'incoming' && slotProps.data.status === 'pending'">
-                                    <Button color="success" size="sm" @click="handleApprove(slotProps.data)" title="Approve & Pay">
+                                    <Button 
+                                        color="success" 
+                                        size="sm" 
+                                        :disabled="approveForm.form.processing"
+                                        @click="handleApprove(slotProps.data)" 
+                                        title="Approve & Pay"
+                                    >
                                         <Check class="size-4 me-1" /> Approve
                                     </Button>
-                                    <Button color="error" soft size="sm" @click="handleReject(slotProps.data)" title="Decline">
+                                    <Button 
+                                        color="error" 
+                                        soft 
+                                        size="sm" 
+                                        :disabled="rejectForm.form.processing"
+                                        @click="handleReject(slotProps.data)" 
+                                        title="Decline"
+                                    >
                                         <X class="size-4 me-1" /> Decline
                                     </Button>
                                 </template>
@@ -257,15 +280,30 @@ const openCreateModal = () => {
             <template #title>
                 <div class="flex items-center gap-2 text-primary">
                     <HandCoins class="size-5" />
-                    <span>Create Money Request</span>
+                    <span>Create Money or Loan Request</span>
                 </div>
             </template>
 
             <template #content>
                 <form @submit.prevent="handleCreateSubmit" id="create-request-form" class="space-y-4">
+                    <!-- Request Type -->
+                    <div>
+                        <InputLabel for="type" value="Request Purpose / Type" />
+                        <SelectBox 
+                            id="type"
+                            v-model="form.type"
+                            class="w-full mt-1"
+                            :options="[
+                                { label: 'Standard Payment Request', value: 'standard' },
+                                { label: 'P2P Micro-Loan Request', value: 'loan' },
+                            ]"
+                        />
+                        <InputError :message="form.errors.type" class="mt-1" />
+                    </div>
+
                     <!-- Payer -->
                     <div>
-                        <InputLabel for="payer" value="Payer (Email or Phone)" />
+                        <InputLabel for="payer" value="Payer / Lender (Email or Phone)" />
                         <TextInput 
                             id="payer" 
                             type="text" 
@@ -283,13 +321,26 @@ const openCreateModal = () => {
                         <TextInput 
                             id="amount" 
                             type="number" 
-                            min="1" 
+                            min="10" 
                             v-model="form.amount" 
                             class="w-full mt-1"
-                            placeholder="Enter requested amount" 
+                            placeholder="Enter requested amount (Min 10 BDT)" 
                             required 
                         />
                         <InputError :message="form.errors.amount" class="mt-1" />
+                    </div>
+
+                    <!-- Due Date (Required for Loans) -->
+                    <div v-if="form.type === 'loan'">
+                        <InputLabel for="due_at" value="Repayment Due Date" />
+                        <TextInput 
+                            id="due_at" 
+                            type="date" 
+                            v-model="form.due_at" 
+                            class="w-full mt-1"
+                            required
+                        />
+                        <InputError :message="form.errors.due_at" class="mt-1" />
                     </div>
 
                     <!-- Expires in Days -->
@@ -306,6 +357,19 @@ const openCreateModal = () => {
                         <InputError :message="form.errors.expires_in_days" class="mt-1" />
                     </div>
 
+                    <!-- Note -->
+                    <div>
+                        <InputLabel for="note" value="Note / Purpose (Optional)" />
+                        <TextInput 
+                            id="note" 
+                            type="text" 
+                            v-model="form.note" 
+                            class="w-full mt-1"
+                            placeholder="e.g. Dinner bill split, emergency loan" 
+                        />
+                        <InputError :message="form.errors.note" class="mt-1" />
+                    </div>
+
                     <!-- Pre-hold Checkbox -->
                     <div class="flex items-center gap-2 pt-2">
                         <input 
@@ -314,7 +378,7 @@ const openCreateModal = () => {
                             v-model="form.pre_hold" 
                             class="checkbox checkbox-primary checkbox-sm" 
                         />
-                        <InputLabel for="pre_hold" value="Pre-hold payer funds upon approval" class="cursor-pointer text-xs" />
+                        <InputLabel for="pre_hold" value="Pre-hold payer funds upon creation" class="cursor-pointer text-xs" />
                     </div>
                 </form>
             </template>
@@ -330,7 +394,7 @@ const openCreateModal = () => {
                     type="submit" 
                     form="create-request-form"
                 >
-                    Send Money Request
+                    Send Request
                 </Button>
             </template>
         </DialogModal>

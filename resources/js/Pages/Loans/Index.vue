@@ -60,13 +60,13 @@ watch(
 );
 
 // Modals state
-const showDisburseModal = ref(false);
+const showRequestLoanModal = ref(false);
 const showRepayModal = ref(false);
 const selectedLoanToRepay = ref(null);
 
 // Forms
-const disburseForm = useIdempotentForm({
-    borrower: '',
+const requestLoanForm = useIdempotentForm({
+    lender: '',
     principal_amount: '',
     due_at: '',
     note: '',
@@ -76,12 +76,12 @@ const repayForm = useIdempotentForm({
     amount: '',
 });
 
-const handleDisburseSubmit = () => {
-    disburseForm.submit('post', store(), {
+const handleRequestLoanSubmit = () => {
+    requestLoanForm.submit('post', store(), {
         preserveScroll: true,
         onSuccess: () => {
-            showDisburseModal.value = false;
-            disburseForm.form.reset();
+            showRequestLoanModal.value = false;
+            requestLoanForm.form.reset();
         },
     });
 };
@@ -112,10 +112,10 @@ const handleWaiveLoan = (loan) => {
     }
 };
 
-const openDisburseModal = () => {
-    disburseForm.resetKey();
-    disburseForm.form.reset();
-    showDisburseModal.value = true;
+const openRequestLoanModal = () => {
+    requestLoanForm.resetKey();
+    requestLoanForm.form.reset();
+    showRequestLoanModal.value = true;
 };
 </script>
 
@@ -132,16 +132,16 @@ const openDisburseModal = () => {
                         </div>
                         <div>
                             <h1 class="text-xl font-bold text-base-content">
-                                Peer-to-Peer Loans & Credit
+                                Peer-to-Peer Loans & Micro-Credit
                             </h1>
                             <p class="text-xs text-base-content/60">
-                                Issue micro-loans, track active debts, and process repayments seamlessly.
+                                Request micro-loans from lenders, manage active debts, and track repayments.
                             </p>
                         </div>
                     </div>
 
-                    <Button color="primary" @click="openDisburseModal">
-                        <PlusCircle class="inline-block me-1" size="16" /> Disburse Loan
+                    <Button color="primary" @click="openRequestLoanModal">
+                        <PlusCircle class="inline-block me-1" size="16" /> Request Loan
                     </Button>
                 </div>
             </div>
@@ -282,29 +282,29 @@ const openDisburseModal = () => {
             </div>
         </ListLayout>
 
-        <!-- Disburse Loan Modal -->
-        <DialogModal :show="showDisburseModal" @close="showDisburseModal = false">
+        <!-- Request Loan from Lender Modal -->
+        <DialogModal :show="showRequestLoanModal" @close="showRequestLoanModal = false">
             <template #title>
                 <div class="flex items-center gap-2 text-primary">
                     <HandCoins class="size-5" />
-                    <span>Disburse New Loan</span>
+                    <span>Request P2P Micro-Loan</span>
                 </div>
             </template>
 
             <template #content>
-                <form @submit.prevent="handleDisburseSubmit" id="disburse-form" class="space-y-4">
-                    <!-- Borrower -->
+                <form @submit.prevent="handleRequestLoanSubmit" id="request-loan-form" class="space-y-4">
+                    <!-- Lender -->
                     <div>
-                        <InputLabel for="borrower" value="Borrower (Email or Phone)" />
+                        <InputLabel for="lender" value="Lender (Email or Phone Number)" />
                         <TextInput 
-                            id="borrower" 
+                            id="lender" 
                             type="text" 
-                            v-model="disburseForm.form.borrower" 
+                            v-model="requestLoanForm.form.lender" 
                             class="w-full mt-1"
-                            placeholder="borrower@example.com or +8801700000000" 
+                            placeholder="lender@example.com or +8801700000000" 
                             required 
                         />
-                        <InputError :message="disburseForm.form.errors.borrower" class="mt-1" />
+                        <InputError :message="requestLoanForm.form.errors.lender" class="mt-1" />
                     </div>
 
                     <!-- Principal Amount -->
@@ -313,54 +313,55 @@ const openDisburseModal = () => {
                         <TextInput 
                             id="principal_amount" 
                             type="number" 
-                            min="1" 
-                            v-model="disburseForm.form.principal_amount" 
+                            min="10" 
+                            v-model="requestLoanForm.form.principal_amount" 
                             class="w-full mt-1"
-                            placeholder="Enter principal amount" 
+                            placeholder="Enter requested loan amount (Min 10 BDT)" 
                             required 
                         />
-                        <InputError :message="disburseForm.form.errors.principal_amount" class="mt-1" />
+                        <InputError :message="requestLoanForm.form.errors.principal_amount" class="mt-1" />
                     </div>
 
                     <!-- Due Date -->
                     <div>
-                        <InputLabel for="due_at" value="Repayment Due Date (Optional)" />
+                        <InputLabel for="due_at" value="Repayment Due Date" />
                         <TextInput 
                             id="due_at" 
                             type="date" 
-                            v-model="disburseForm.form.due_at" 
+                            v-model="requestLoanForm.form.due_at" 
                             class="w-full mt-1"
+                            required 
                         />
-                        <InputError :message="disburseForm.form.errors.due_at" class="mt-1" />
+                        <InputError :message="requestLoanForm.form.errors.due_at" class="mt-1" />
                     </div>
 
                     <!-- Note -->
                     <div>
-                        <InputLabel for="note" value="Note / Agreement Reference (Optional)" />
+                        <InputLabel for="note" value="Loan Purpose / Agreement Note (Optional)" />
                         <TextInput 
                             id="note" 
                             type="text" 
-                            v-model="disburseForm.form.note" 
+                            v-model="requestLoanForm.form.note" 
                             class="w-full mt-1"
-                            placeholder="e.g. Business expansion loan, emergency credit" 
+                            placeholder="e.g. Emergency credit, business inventory" 
                         />
-                        <InputError :message="disburseForm.form.errors.note" class="mt-1" />
+                        <InputError :message="requestLoanForm.form.errors.note" class="mt-1" />
                     </div>
                 </form>
             </template>
 
             <template #footer>
-                <Button color="neutral" soft class="me-2" @click="showDisburseModal = false" type="button">
+                <Button color="neutral" soft class="me-2" @click="showRequestLoanModal = false" type="button">
                     Cancel
                 </Button>
 
                 <Button 
                     color="primary" 
-                    :disabled="disburseForm.form.processing" 
+                    :disabled="requestLoanForm.form.processing" 
                     type="submit" 
-                    form="disburse-form"
+                    form="request-loan-form"
                 >
-                    Disburse Loan Funds
+                    Send Loan Request
                 </Button>
             </template>
         </DialogModal>

@@ -84,6 +84,13 @@ const { filters, reset } = useFilter(index(), props.filters, {
                             </span>
                         </template>
                     </Column>
+                    <Column field="amount" header="Amount">
+                        <template #body="slotProps">
+                            <span class="font-extrabold text-base-content">
+                                {{ slotProps.data.amount?.formatted ?? '0.00' }} BDT
+                            </span>
+                        </template>
+                    </Column>
                     <Column header="Initiated By">
                         <template #body="slotProps">
                             <span class="text-sm font-medium text-base-content">
