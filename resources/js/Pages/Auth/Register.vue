@@ -17,6 +17,7 @@ const form = useForm({
     name: '',
     email: '',
     phone: '',
+    nid: '',
     password: '',
     password_confirmation: '',
     terms: false,
@@ -54,6 +55,11 @@ const submit = () => {
                     placeholder="01XXXXXXXXX" autocomplete="phone" />
             </FormField>
 
+            <FormField name="nid" :error="form.errors.nid" class="mt-4">
+                <TextInput id="nid" v-model="form.nid" type="tel" class="mt-1 block w-full" required placeholder="XXXX"
+                    autocomplete="nid" />
+            </FormField>
+
             <FormField name="password" :error="form.errors.password" class="mt-4">
                 <Password id="password" v-model="form.password" class="mt-1 w-full" autocomplete="new-password" />
             </FormField>
@@ -82,8 +88,7 @@ const submit = () => {
             </div>
 
             <div class="flex items-center justify-end mt-4">
-                <Link :href="login()"
-                    class="text-sm link link-primary">
+                <Link :href="login()" class="text-sm link link-primary">
                     Already registered?
                 </Link>
 

@@ -32,36 +32,42 @@ class UserSeeder extends Seeder
                 'name' => 'Rahim Ahmed',
                 'email' => 'user@test.com',
                 'phone' => '01700000001',
+                'nid' => 'XXXXXXXX03',
                 'balance_bdt' => 50000,
             ],
             [
                 'name' => 'Karim Chowdhury',
                 'email' => 'user2@test.com',
                 'phone' => '01700000002',
+                'nid' => 'XXXXXXXX04',
                 'balance_bdt' => 40000,
             ],
             [
                 'name' => 'Nusrat Jahan',
                 'email' => 'user3@test.com',
                 'phone' => '01700000003',
+                'nid' => 'XXXXXXXX05',
                 'balance_bdt' => 25000,
             ],
             [
                 'name' => 'Tanvir Hasan',
                 'email' => 'user4@test.com',
                 'phone' => '01700000004',
+                'nid' => 'XXXXXXXX06',
                 'balance_bdt' => 60000,
             ],
             [
                 'name' => 'Ayesha Siddiqua',
                 'email' => 'user5@test.com',
                 'phone' => '01700000005',
+                'nid' => 'XXXXXXXX07',
                 'balance_bdt' => 15000,
             ],
             [
                 'name' => 'Gloria Jeans Coffee',
                 'email' => 'merchant@test.com',
                 'phone' => '01700000009',
+                'nid' => 'XXXXXXXX08',
                 'balance_bdt' => 10000,
             ],
         ];
@@ -73,6 +79,7 @@ class UserSeeder extends Seeder
                     [
                         'name' => $userData['name'],
                         'phone' => $userData['phone'],
+                        'nid' => $userData['nid'],
                         'password' => Hash::make('password'),
                         'email_verified_at' => now(),
                     ]

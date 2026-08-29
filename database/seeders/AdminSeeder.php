@@ -21,6 +21,7 @@ class AdminSeeder extends Seeder
             [
                 'name' => 'Super Admin',
                 'phone' => '01711111111',
+                'nid' => 'XXXXXXXX01',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ]
@@ -39,6 +40,7 @@ class AdminSeeder extends Seeder
             [
                 'name' => 'Operations Admin',
                 'phone' => '01711111112',
+                'nid' => 'XXXXXXXX02',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ]
