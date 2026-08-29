@@ -22,7 +22,8 @@ import {
     ShieldCheck,
     HeartHandshake,
     ShieldAlert,
-    Lock
+    Lock,
+    Key
 } from 'lucide-vue-next';
 
 import DashboardLayout from '@/Layouts/DashboardLayout.vue';
@@ -85,6 +86,8 @@ const getIconComponent = (iconName) => {
             return ShieldAlert;
         case 'lock':
             return Lock;
+        case 'key':
+            return Key;
         default:
             return Bell;
     }
