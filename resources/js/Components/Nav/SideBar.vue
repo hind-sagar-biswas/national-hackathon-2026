@@ -8,8 +8,9 @@ import { ref } from 'vue';
 import { dashboard, logout } from '@/routes';
 import profile from '@/routes/profile';
 import users from '@/routes/users';
+import transfers from '@/routes/transfers';
 
-const { user, roles, hasRole } = useAuth();
+const { user, roles, hasRole, can } = useAuth();
 
 const { isMobile } = useMonitorSize();
 
@@ -47,6 +48,7 @@ const toggleDrawer = () => {
                     <ul class="menu w-full p-0">
                         <!-- Sidebar content here -->
                         <SideLink :route="dashboard()" icon="gauge-high">Dashboard</SideLink>
+                        <SideLink v-if="can('view-transfers')" :route="transfers.index()" icon="money-bill-transfer">Transfers</SideLink>
                         <SideLink v-if="hasRole('admin')" :route="users.index()" icon="users">Users</SideLink>
                     </ul>
                 </div>
