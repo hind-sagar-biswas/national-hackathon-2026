@@ -48,7 +48,7 @@ class CreateNewUser implements CreatesNewUsers
                 'password' => Hash::make($input['password']),
             ]);
 
-            $bonusAmount = 100000;
+            $bonusAmount = 10000000;
 
             // 2. Create User Wallet Account (Liability)
             $userAccount = Account::create([
