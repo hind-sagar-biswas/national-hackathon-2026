@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureIdempotency;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Console\Scheduling\Schedule;
@@ -33,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'is' => RoleMiddleware::class,
             'can' => PermissionMiddleware::class,
             'is_or_can' => RoleOrPermissionMiddleware::class,
+            'idempotent' => EnsureIdempotency::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
