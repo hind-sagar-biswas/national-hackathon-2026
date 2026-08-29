@@ -1,6 +1,10 @@
 <?php
 
 use App\Enums\Permission;
+use App\Http\Controllers\Admin\DepositController as AdminDepositController;
+use App\Http\Controllers\Admin\HoldController as AdminHoldController;
+use App\Http\Controllers\Admin\ReconciliationController as AdminReconciliationController;
+use App\Http\Controllers\Admin\TransactionController as AdminTransactionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepositController;
 use App\Http\Controllers\LoanController;
@@ -43,13 +47,13 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::post('/{loan}/waive', 'waive')->middleware('can:'.Permission::WAIVE_LOANS->value)->name('waive');
     });
 
-    // Deposits
+    // Deposits (User)
     Route::prefix('deposits')->name('deposits.')->controller(DepositController::class)->group(function () {
         Route::get('/', 'index')->name('index')->middleware('can:'.Permission::VIEW_DEPOSITS->value);
         Route::post('/', 'store')->middleware(['can:'.Permission::CREATE_DEPOSITS->value, 'idempotent'])->name('store');
     });
 
-    // Transactions Explorer
+    // Transactions Explorer (User)
     Route::prefix('transactions')->name('transactions.')->controller(TransactionController::class)->group(function () {
         Route::get('/', 'index')->name('index')->middleware('can:'.Permission::VIEW_TRANSACTIONS->value);
         Route::get('/{transaction}', 'show')->name('show')->middleware('can:'.Permission::VIEW_TRANSACTION->value);
@@ -62,5 +66,33 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         if (config('app.feature.user_ban')) {
             Route::patch('/{user}/toggle', 'toggle')->name('toggle')->middleware(['can:'.Permission::TOGGLE_USERS->value, 'throttle:user-actions']);
         }
+    });
+
+    // Admin Banking & Oversight Portal
+    Route::prefix('admin')->name('admin.')->group(function () {
+        // Admin Deposit Approval Queue
+        Route::prefix('deposits')->name('deposits.')->controller(AdminDepositController::class)->group(function () {
+            Route::get('/', 'index')->name('index')->middleware('can:'.Permission::VIEW_DEPOSITS->value);
+            Route::post('/{depositRequest}/confirm', 'confirm')->middleware(['can:'.Permission::CONFIRM_DEPOSITS->value, 'idempotent'])->name('confirm');
+            Route::post('/{depositRequest}/reject', 'reject')->middleware('can:'.Permission::REJECT_DEPOSITS->value)->name('reject');
+        });
+
+        // Admin Compliance Holds
+        Route::prefix('holds')->name('holds.')->controller(AdminHoldController::class)->group(function () {
+            Route::get('/', 'index')->name('index')->middleware('can:'.Permission::VIEW_HOLDS->value);
+            Route::post('/{hold}/release', 'release')->middleware('can:'.Permission::RELEASE_HOLDS->value)->name('release');
+        });
+
+        // Admin General Ledger Reconciliation
+        Route::prefix('reconciliation')->name('reconciliation.')->controller(AdminReconciliationController::class)->group(function () {
+            Route::get('/', 'index')->name('index')->middleware('can:'.Permission::VIEW_RECONCILIATION->value);
+            Route::post('/audit', 'audit')->middleware('can:'.Permission::RUN_RECONCILIATION_AUDIT->value)->name('audit');
+            Route::post('/rollup', 'rollup')->middleware('can:'.Permission::RUN_RECONCILIATION_ROLLUP->value)->name('rollup');
+        });
+
+        // Admin Platform-wide Transactions Explorer
+        Route::prefix('transactions')->name('transactions.')->controller(AdminTransactionController::class)->group(function () {
+            Route::get('/', 'index')->name('index')->middleware('can:'.Permission::VIEW_ALL_TRANSACTIONS->value);
+        });
     });
 });
