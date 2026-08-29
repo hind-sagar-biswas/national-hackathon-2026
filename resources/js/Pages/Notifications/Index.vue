@@ -9,7 +9,20 @@ import {
     AlertTriangle,
     Check,
     Trash2,
-    ExternalLink
+    ExternalLink,
+    Gift,
+    ArrowUpRight,
+    ArrowDownLeft,
+    Wallet,
+    AlertCircle,
+    HandCoins,
+    Clock,
+    BadgeDollarSign,
+    Receipt,
+    ShieldCheck,
+    HeartHandshake,
+    ShieldAlert,
+    Lock
 } from 'lucide-vue-next';
 
 import DashboardLayout from '@/Layouts/DashboardLayout.vue';
@@ -44,7 +57,34 @@ const getIconComponent = (iconName) => {
         case 'error':
             return XCircle;
         case 'warning':
+        case 'alert-triangle':
             return AlertTriangle;
+        case 'alert-circle':
+            return AlertCircle;
+        case 'gift':
+            return Gift;
+        case 'arrow-up-right':
+            return ArrowUpRight;
+        case 'arrow-down-left':
+            return ArrowDownLeft;
+        case 'wallet':
+            return Wallet;
+        case 'hand-coins':
+            return HandCoins;
+        case 'clock':
+            return Clock;
+        case 'badge-dollar-sign':
+            return BadgeDollarSign;
+        case 'receipt':
+            return Receipt;
+        case 'shield-check':
+            return ShieldCheck;
+        case 'heart-handshake':
+            return HeartHandshake;
+        case 'shield-alert':
+            return ShieldAlert;
+        case 'lock':
+            return Lock;
         default:
             return Bell;
     }
