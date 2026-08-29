@@ -12,6 +12,11 @@ class TransferOtpNotification extends Notification
         public int $expiresInMinutes = 5,
     ) {}
 
+    public function via(object $notifiable): array
+    {
+        return ['mail'];
+    }
+
     protected function getNotificationType(): string
     {
         return 'warning';
