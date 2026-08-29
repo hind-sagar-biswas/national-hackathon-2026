@@ -106,7 +106,9 @@ class LoanService
         }
 
         if ($amount > $loan->outstanding_amount) {
-            throw new RuntimeException("Repayment amount ({$amount}) exceeds outstanding loan balance ({$loan->outstanding_amount}).");
+            $amtFormatted = formatPaisa($amount);
+            $outstandingFormatted = formatPaisa($loan->outstanding_amount);
+            throw new RuntimeException("Repayment amount ({$amtFormatted} BDT) exceeds outstanding loan balance ({$outstandingFormatted} BDT).");
         }
 
         $borrowerAccount = $loan->borrower->account;

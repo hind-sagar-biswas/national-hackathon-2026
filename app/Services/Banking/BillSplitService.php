@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Notifications\Banking\BillSplitCompletedNotification;
 use App\Notifications\Banking\BillSplitFailedNotification;
 use App\Notifications\Banking\BillSplitInvitationNotification;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Throwable;
@@ -274,6 +275,7 @@ class BillSplitService
     {
         $billSplit->loadMissing(['initiatorAccount.user', 'initiatorUser']);
         $initiatorAccount = $billSplit->initiatorAccount;
+        /** @var Collection<BillSplitParticipant> $participants */
         $participants = $billSplit->participants()->with(['user', 'account.user', 'hold', 'moneyRequest'])->get();
 
         DB::transaction(function () use ($billSplit, $initiatorAccount, $participants) {

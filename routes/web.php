@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\DepositController as AdminDepositController;
 use App\Http\Controllers\Admin\HoldController as AdminHoldController;
 use App\Http\Controllers\Admin\ReconciliationController as AdminReconciliationController;
 use App\Http\Controllers\Admin\TransactionController as AdminTransactionController;
+use App\Http\Controllers\BillSplitController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepositController;
 use App\Http\Controllers\LoanController;
@@ -36,6 +37,16 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::post('/{moneyRequest}/approve', 'approve')->middleware(['can:'.Permission::APPROVE_MONEY_REQUESTS->value, 'idempotent'])->name('approve');
         Route::post('/{moneyRequest}/reject', 'reject')->middleware('can:'.Permission::REJECT_MONEY_REQUESTS->value)->name('reject');
         Route::delete('/{moneyRequest}', 'destroy')->middleware('can:'.Permission::DELETE_MONEY_REQUESTS->value)->name('destroy');
+    });
+
+    // Bill Splitting
+    Route::prefix('bill-splits')->name('bill-splits.')->controller(BillSplitController::class)->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:'.Permission::VIEW_BILL_SPLITS->value);
+        Route::get('/{billSplit}', 'show')->name('show')->middleware('can:'.Permission::VIEW_BILL_SPLIT->value);
+        Route::post('/', 'store')->middleware(['can:'.Permission::CREATE_BILL_SPLITS->value, 'idempotent'])->name('store');
+        Route::post('/{billSplit}/accept', 'accept')->middleware(['can:'.Permission::ACCEPT_BILL_SPLITS->value, 'idempotent'])->name('accept');
+        Route::post('/{billSplit}/reject', 'reject')->middleware('can:'.Permission::REJECT_BILL_SPLITS->value)->name('reject');
+        Route::delete('/{billSplit}', 'destroy')->middleware('can:'.Permission::CANCEL_BILL_SPLITS->value)->name('destroy');
     });
 
     // Peer-to-Peer Loans
