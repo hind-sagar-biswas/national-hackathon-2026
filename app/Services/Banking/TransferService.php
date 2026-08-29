@@ -12,13 +12,128 @@ use App\Models\OperationEvent;
 use App\Models\Transaction;
 use App\Notifications\Banking\MoneyReceivedNotification;
 use App\Notifications\Banking\MoneySentNotification;
+use App\Notifications\Banking\SuspiciousActivityAlertNotification;
+use App\Notifications\Banking\TransactionHeldNotification;
+use App\Services\Auth\OtpService;
+use App\Services\Risk\DTOs\RiskContextDTO;
+use App\Services\Risk\Exceptions\RiskChallengeRequiredException;
+use App\Services\Risk\Exceptions\TransactionHeldForReviewException;
+use App\Services\Risk\RiskEvaluationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use RuntimeException;
 use Throwable;
 
 class TransferService
 {
+    public function __construct(
+        protected ?RiskEvaluationService $riskEvaluationService = null,
+        protected ?HoldService $holdService = null,
+        protected ?OtpService $otpService = null,
+    ) {}
+
+    /**
+     * Universal double-entry transfer engine with integrated risk evaluation.
+     */
+    public function executeWithRiskCheck(
+        Account $fromAccount,
+        Account $toAccount,
+        int $amount,
+        TransactionType $type,
+        string $idempotencyKey,
+        ?int $initiatedByUserId = null,
+        int $feeAmount = 0,
+        array $metadata = [],
+        ?string $reference = null,
+        ?string $otpCode = null,
+    ): Transaction {
+        $riskService = $this->riskEvaluationService ?? app(RiskEvaluationService::class);
+        $holdService = $this->holdService ?? app(HoldService::class);
+        $otpService = $this->otpService ?? app(OtpService::class);
+
+        $context = RiskContextDTO::fromRequest($fromAccount, $toAccount, $amount, $metadata);
+        $assessment = $riskService->evaluate($context);
+
+        // 1. High Risk -> Freeze funds in a Hold for compliance review
+        if ($assessment->shouldHold()) {
+            $totalHoldAmount = $amount + $feeAmount;
+            $hold = $holdService->createHold(
+                account: $fromAccount,
+                amount: $totalHoldAmount,
+                reason: 'Automated security hold: elevated risk score',
+            );
+
+            OperationEvent::firstOrCreate(
+                ['operation_key' => $idempotencyKey, 'status' => TransactionStatus::HELD],
+                [
+                    'from_account_id' => $fromAccount->id,
+                    'to_account_id' => $toAccount->id,
+                    'amount' => $amount,
+                    'metadata' => array_merge($metadata, [
+                        'risk' => $assessment->toArray(),
+                        'hold_id' => $hold->id,
+                    ]),
+                ]
+            );
+
+            if ($fromAccount->user) {
+                $dummyTxn = new Transaction([
+                    'reference' => $reference ?: 'HOLD-'.strtoupper(Str::random(8)),
+                    'id' => 'HELD-'.$hold->id,
+                ]);
+                $fromAccount->user->notify(new TransactionHeldNotification($dummyTxn, $amount, 'High security risk score'));
+            }
+
+            throw new TransactionHeldForReviewException($assessment, $hold);
+        }
+
+        // 2. Mod-High Risk -> Step-up OTP challenge required
+        if ($assessment->requiresChallenge() && $fromAccount->user) {
+            if ($otpCode) {
+                $isValid = $otpService->verify($fromAccount->user, $otpCode, 'transfer');
+                if (! $isValid) {
+                    throw ValidationException::withMessages([
+                        'otp_code' => 'Invalid or expired OTP verification code.',
+                    ]);
+                }
+            } else {
+                // Generate and dispatch OTP challenge to user
+                $otpService->generateAndSend($fromAccount->user, 'transfer');
+
+                throw new RiskChallengeRequiredException(
+                    assessment: $assessment,
+                    message: 'Security verification required. A 6-digit OTP has been sent to your registered contact.'
+                );
+            }
+        }
+
+        // 3. Moderate Risk -> Proceed normally + async security notice to user
+        if ($assessment->shouldNotify()) {
+            DB::afterCommit(function () use ($fromAccount, $amount) {
+                if ($fromAccount->user) {
+                    $formatted = number_format($amount);
+                    $fromAccount->user->notify(new SuspiciousActivityAlertNotification(
+                        actionDescription: "Transfer of {$formatted} BDT",
+                        ip: request()?->ip(),
+                    ));
+                }
+            });
+        }
+
+        return $this->transfer(
+            fromAccount: $fromAccount,
+            toAccount: $toAccount,
+            amount: $amount,
+            type: $type,
+            idempotencyKey: $idempotencyKey,
+            initiatedByUserId: $initiatedByUserId,
+            feeAmount: $feeAmount,
+            metadata: array_merge($metadata, ['risk' => $assessment->toArray()]),
+            reference: $reference,
+        );
+    }
+
     /**
      * Universal double-entry transfer engine.
      *
