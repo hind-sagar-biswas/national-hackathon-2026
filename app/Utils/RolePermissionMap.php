@@ -39,6 +39,8 @@ class RolePermissionMap
             Permission::VIEW_TRANSFERS->value,
             Permission::VIEW_LOANS->value,
             Permission::VIEW_MONEY_REQUESTS->value,
+            Permission::VIEW_BILL_SPLITS->value,
+            Permission::VIEW_BILL_SPLIT->value,
         ],
         Role::USER->value => [
             // Dashboards
@@ -54,6 +56,14 @@ class RolePermissionMap
             Permission::APPROVE_MONEY_REQUESTS->value,
             Permission::REJECT_MONEY_REQUESTS->value,
             Permission::DELETE_MONEY_REQUESTS->value,
+
+            // Bill Splitting
+            Permission::VIEW_BILL_SPLITS->value,
+            Permission::VIEW_BILL_SPLIT->value,
+            Permission::CREATE_BILL_SPLITS->value,
+            Permission::ACCEPT_BILL_SPLITS->value,
+            Permission::REJECT_BILL_SPLITS->value,
+            Permission::CANCEL_BILL_SPLITS->value,
 
             // Peer-to-Peer Loans
             Permission::VIEW_LOANS->value,
