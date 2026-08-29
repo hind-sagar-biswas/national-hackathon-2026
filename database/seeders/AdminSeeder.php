@@ -18,6 +18,7 @@ class AdminSeeder extends Seeder
         $user = User::factory()->create([
             'name' => 'Super Admin',
             'email' => 'super@test.com',
+            'phone' => '01711111111',
         ]);
         Admin::create([
             'user_id' => $user->id,
