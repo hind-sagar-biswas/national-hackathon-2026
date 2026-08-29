@@ -3,6 +3,9 @@
 use App\Http\Middleware\EnsureIdempotency;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Jobs\GeneralLedgerRollupJob;
+use App\Jobs\HoldExpirySweepJob;
+use App\Jobs\LedgerReconciliationJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -53,5 +56,8 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })->withSchedule(function (Schedule $schedule) {
         $schedule->command('queue:work --tries=3 --stop-when-empty')->name('queue-work')->everyMinute()->withoutOverlapping();
+        $schedule->job(new HoldExpirySweepJob)->name('hold-expiry-sweep')->everyFiveMinutes()->withoutOverlapping();
+        $schedule->job(new LedgerReconciliationJob)->name('ledger-reconciliation')->everyFifteenMinutes()->withoutOverlapping();
+        $schedule->job(new GeneralLedgerRollupJob)->name('general-ledger-rollup')->hourly()->withoutOverlapping();
         $schedule->command('auth:clear-resets')->everyFifteenMinutes();
     })->create();
