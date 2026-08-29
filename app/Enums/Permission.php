@@ -28,6 +28,14 @@ enum Permission: string
     case REJECT_MONEY_REQUESTS = 'reject-money-requests';
     case DELETE_MONEY_REQUESTS = 'delete-money-requests';
 
+    // Bill Splitting
+    case VIEW_BILL_SPLITS = 'view-bill-splits';
+    case VIEW_BILL_SPLIT = 'view-bill-split';
+    case CREATE_BILL_SPLITS = 'create-bill-splits';
+    case ACCEPT_BILL_SPLITS = 'accept-bill-splits';
+    case REJECT_BILL_SPLITS = 'reject-bill-splits';
+    case CANCEL_BILL_SPLITS = 'cancel-bill-splits';
+
     // Peer-to-Peer Loans
     case VIEW_LOANS = 'view-loans';
     case VIEW_LOAN = 'view-loan';
