@@ -20,6 +20,7 @@ const form = useForm({
     _method: 'PUT',
     name: props.user.name,
     email: props.user.email,
+    phone: props.user.phone,
     photo: null,
 });
 
@@ -146,6 +147,13 @@ const clearPhotoFileInput = () => {
                     </div>
                 </div>
             </FormField>
+
+            <!-- Phone -->
+            <FormField name="phone" :error="form.errors.phone" class="col-span-6 sm:col-span-4">
+                <TextInput id="phone" v-model="form.phone" type="tel" class="mt-1 block w-full" required
+                    placeholder="01XXXXXXXXX" autocomplete="phone" />
+            </FormField>
+
         </template>
 
         <template #actions>

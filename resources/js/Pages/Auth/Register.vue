@@ -16,6 +16,7 @@ import { login, register } from '@/routes';
 const form = useForm({
     name: '',
     email: '',
+    phone: '',
     password: '',
     password_confirmation: '',
     terms: false,
@@ -46,6 +47,11 @@ const submit = () => {
             <FormField name="email" :error="form.errors.email" class="mt-4">
                 <TextInput id="email" v-model="form.email" type="email" class="mt-1 block w-full" required
                     autocomplete="username" />
+            </FormField>
+
+            <FormField name="phone" :error="form.errors.phone" class="mt-4">
+                <TextInput id="phone" v-model="form.phone" type="tel" class="mt-1 block w-full" required
+                    placeholder="01XXXXXXXXX" autocomplete="phone" />
             </FormField>
 
             <FormField name="password" :error="form.errors.password" class="mt-4">
