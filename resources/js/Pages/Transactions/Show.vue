@@ -7,7 +7,6 @@ import {
     CheckCircle2, 
     Clock, 
     FileText, 
-    Printer, 
     Receipt, 
     ShieldCheck, 
     User 
@@ -22,28 +21,20 @@ const props = defineProps({
 defineOptions({
     layout: (props) => [DashboardLayout, { title: `Receipt ${props.transaction?.reference}` }],
 });
-
-const printReceipt = () => {
-    window.print();
-};
 </script>
 
 <template>
-    <div class="p-5 space-y-6 max-w-4xl mx-auto print:p-0 print:max-w-none">
+    <div class="p-5 space-y-6 max-w-4xl mx-auto">
 
-        <!-- Navigation & Print Controls -->
-        <div class="flex items-center justify-between print:hidden">
+        <!-- Navigation Controls -->
+        <div class="flex items-center justify-between">
             <Button as="link" :href="transactionsIndex()" color="neutral" ghost size="sm">
                 <ArrowLeft class="size-4 me-1" /> Back to Transactions
-            </Button>
-
-            <Button color="primary" size="sm" @click="printReceipt">
-                <Printer class="size-4 me-1" /> Print Official Receipt
             </Button>
         </div>
 
         <!-- Official Digital Receipt Card -->
-        <div class="card bg-base-100 shadow-xl border border-base-300 print:shadow-none print:border-none">
+        <div class="card bg-base-100 shadow-xl border border-base-300">
             <div class="card-body p-8 space-y-6">
 
                 <!-- Header / Watermark -->
@@ -62,9 +53,9 @@ const printReceipt = () => {
                         <span class="badge badge-lg uppercase font-extrabold" :class="{
                             'badge-primary': transaction.type === 'transfer',
                             'badge-success': transaction.type === 'deposit',
-                            'badge-warning': transaction.type === 'money_request',
+                            'badge-warning': transaction.type === 'money_request' || transaction.type === 'request_settlement',
                             'badge-info': transaction.type === 'loan',
-                            'badge-neutral': !['transfer', 'deposit', 'money_request', 'loan'].includes(transaction.type)
+                            'badge-neutral': !['transfer', 'deposit', 'money_request', 'request_settlement', 'loan'].includes(transaction.type)
                         }">
                             {{ transaction.type?.replace('_', ' ') }}
                         </span>
@@ -101,7 +92,7 @@ const printReceipt = () => {
                     </h3>
 
                     <div class="overflow-x-auto rounded-box border border-base-200">
-                        <DataTable :value="transaction.ledgerEntries || []" class="bg-base-100">
+                        <DataTable :value="transaction.ledger_entries || []" class="bg-base-100">
                             <Column header="Account / Wallet Holder">
                                 <template #body="slotProps">
                                     <div class="flex items-center gap-2">
@@ -117,20 +108,20 @@ const printReceipt = () => {
                                     </div>
                                 </template>
                             </Column>
-                            <Column field="entry_type" header="Entry Type">
+                            <Column field="direction" header="Entry Type">
                                 <template #body="slotProps">
                                     <span class="badge badge-sm font-bold uppercase" :class="{
-                                        'badge-error': slotProps.data.entry_type === 'debit',
-                                        'badge-success': slotProps.data.entry_type === 'credit',
+                                        'badge-error': slotProps.data.direction === 'debit',
+                                        'badge-success': slotProps.data.direction === 'credit',
                                     }">
-                                        {{ slotProps.data.entry_type }}
+                                        {{ slotProps.data.direction }}
                                     </span>
                                 </template>
                             </Column>
                             <Column field="amount" header="Amount">
                                 <template #body="slotProps">
-                                    <span class="font-mono font-extrabold text-base" :class="slotProps.data.entry_type === 'debit' ? 'text-error' : 'text-success'">
-                                        {{ slotProps.data.entry_type === 'debit' ? '-' : '+' }}{{ slotProps.data.amount?.formatted ?? slotProps.data.amount }} BDT
+                                    <span class="font-mono font-extrabold text-base" :class="slotProps.data.direction === 'debit' ? 'text-error' : 'text-success'">
+                                        {{ slotProps.data.direction === 'debit' ? '-' : '+' }}{{ slotProps.data.amount?.formatted ?? slotProps.data.amount }} BDT
                                     </span>
                                 </template>
                             </Column>
