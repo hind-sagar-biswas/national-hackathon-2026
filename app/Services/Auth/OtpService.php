@@ -8,16 +8,29 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redis;
 use RuntimeException;
 
+/**
+ * Service class managing one-time password (OTP) generation, Redis storage, rate limiting, and challenge verification.
+ */
 class OtpService
 {
-    protected const DEFAULT_TTL_SECONDS = 300; // 5 minutes
+    /** @var int Default validity lifespan of an OTP in seconds (5 minutes) */
+    protected const DEFAULT_TTL_SECONDS = 300;
 
-    protected const COOLDOWN_SECONDS = 60; // 1 minute resend throttle
+    /** @var int Cooldown throttle period before requesting a resend in seconds (1 minute) */
+    protected const COOLDOWN_SECONDS = 60;
 
+    /** @var int Maximum permitted incorrect verification attempts before OTP invalidation */
     protected const MAX_ATTEMPTS = 3;
 
     /**
-     * Generate a 6-digit OTP, store in Redis, and dispatch notification to user.
+     * Generate a 6-digit cryptographic OTP, store in Redis with expiration, and dispatch notification to user.
+     *
+     * @param  User  $user  The user receiving the challenge
+     * @param  string  $action  The domain action key (e.g. 'transfer')
+     * @param  int  $ttlSeconds  Lifespan of the code in seconds
+     * @return string The generated plain-text OTP code
+     *
+     * @throws RuntimeException If resend cooldown is currently active
      */
     public function generateAndSend(
         User $user,
@@ -53,7 +66,12 @@ class OtpService
     }
 
     /**
-     * Verify an OTP code provided by the user for a specific action.
+     * Verify an OTP code provided by the user for a specific action against stored cryptographic hash.
+     *
+     * @param  User  $user  The user verifying the code
+     * @param  string  $code  The 6-digit candidate code
+     * @param  string  $action  The domain action key (e.g. 'transfer')
+     * @return bool True if verified successfully, false otherwise
      */
     public function verify(User $user, string $code, string $action = 'transfer'): bool
     {
@@ -98,7 +116,10 @@ class OtpService
     }
 
     /**
-     * Invalidate any active OTP for a user and action.
+     * Invalidate any active OTP and cooldown locks for a user and action.
+     *
+     * @param  User  $user  The user instance
+     * @param  string  $action  The domain action key
      */
     public function clear(User $user, string $action = 'transfer'): void
     {

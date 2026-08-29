@@ -6,23 +6,37 @@ use App\Models\LedgerEntry;
 use App\Services\Risk\Contracts\RiskRuleInterface;
 use App\Services\Risk\DTOs\RiskContextDTO;
 
+/**
+ * Risk rule evaluating outbound transaction frequency and velocity within short time windows.
+ */
 class VelocityRiskRule implements RiskRuleInterface
 {
+    /**
+     * Unique identifier for this rule.
+     */
     public function getIdentifier(): string
     {
         return 'velocity_risk';
     }
 
+    /**
+     * Human-readable rule name.
+     */
     public function getName(): string
     {
         return 'High Frequency Velocity Check';
     }
 
+    /**
+     * Evaluate context and return points to add to risk score (0 to 100).
+     *
+     * @param  RiskContextDTO  $context  The transaction context
+     * @return int Points contributed by this rule
+     */
     public function evaluate(RiskContextDTO $context): int
     {
         $senderAccountId = $context->senderAccount->id;
 
-        // Count recent debits in last 15 minutes
         $recentFifteenMinCount = LedgerEntry::where('account_id', $senderAccountId)
             ->where('created_at', '>=', now()->subMinutes(15))
             ->count();
@@ -35,7 +49,6 @@ class VelocityRiskRule implements RiskRuleInterface
             return 25;
         }
 
-        // Count in last 1 hour
         $recentOneHourCount = LedgerEntry::where('account_id', $senderAccountId)
             ->where('created_at', '>=', now()->subHour())
             ->count();
@@ -47,6 +60,12 @@ class VelocityRiskRule implements RiskRuleInterface
         return 0;
     }
 
+    /**
+     * Optional detailed explanation when this velocity rule matches.
+     *
+     * @param  RiskContextDTO  $context  The transaction context
+     * @return string|null Reason text if triggered
+     */
     public function getReason(RiskContextDTO $context): ?string
     {
         $senderAccountId = $context->senderAccount->id;

@@ -19,15 +19,36 @@ use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
+/**
+ * Service class managing direct money requests, pre-hold escrow reservations, and loan request approvals.
+ */
 class MoneyRequestService
 {
+    /**
+     * Create a new MoneyRequestService instance.
+     *
+     * @param  TransferService  $transferService  The core double-entry transfer engine
+     * @param  HoldService  $holdService  Service managing balance holds
+     */
     public function __construct(
         protected TransferService $transferService,
         protected HoldService $holdService,
     ) {}
 
     /**
-     * Create a money request with an optional pre-hold on the payer.
+     * Create a money request with an optional pre-hold reservation on the payer wallet.
+     *
+     * @param  Account  $requesterAccount  The account requesting the funds
+     * @param  Account  $payerAccount  The target account expected to pay
+     * @param  int  $amount  Requested amount in smallest currency units (paisa/cents)
+     * @param  MoneyRequestType  $type  Standard request or Loan disbursement proposal
+     * @param  CarbonInterface|null  $expiresAt  Expiration date/time of the request
+     * @param  CarbonInterface|null  $dueAt  Repayment due date if type is loan
+     * @param  string|null  $note  Optional invoice/payment note
+     * @param  bool  $preHold  Whether to immediately place a hold on the payer's available balance
+     * @return MoneyRequest The newly created MoneyRequest record
+     *
+     * @throws RuntimeException If amount is non-positive or accounts are identical
      */
     public function createRequest(
         Account $requesterAccount,
@@ -87,7 +108,13 @@ class MoneyRequestService
     }
 
     /**
-     * Approve and settle a money request (creates Loan if type is loan).
+     * Approve and settle a money request (settles funds and creates Loan record if type is loan).
+     *
+     * @param  MoneyRequest  $moneyRequest  The pending money request to approve
+     * @param  string|null  $idempotencyKey  Optional custom operation idempotency key
+     * @return Transaction The completed financial transaction
+     *
+     * @throws RuntimeException If request is not pending or has already expired
      */
     public function approve(MoneyRequest $moneyRequest, ?string $idempotencyKey = null): Transaction
     {
@@ -172,7 +199,11 @@ class MoneyRequestService
     }
 
     /**
-     * Reject a money request and release any active holds.
+     * Reject a money request and release any active pre-reservation holds.
+     *
+     * @param  MoneyRequest  $moneyRequest  The pending money request to reject
+     *
+     * @throws RuntimeException If request is not pending
      */
     public function reject(MoneyRequest $moneyRequest): void
     {
@@ -199,7 +230,9 @@ class MoneyRequestService
     }
 
     /**
-     * Expire an unapproved money request.
+     * Expire an unapproved money request and release any active holds.
+     *
+     * @param  MoneyRequest  $moneyRequest  The pending money request to expire
      */
     public function expire(MoneyRequest $moneyRequest): void
     {

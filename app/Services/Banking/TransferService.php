@@ -25,8 +25,18 @@ use Illuminate\Validation\ValidationException;
 use RuntimeException;
 use Throwable;
 
+/**
+ * Service class responsible for double-entry financial transfers, risk assessment, and idempotency control.
+ */
 class TransferService
 {
+    /**
+     * Create a new TransferService instance.
+     *
+     * @param  RiskEvaluationService|null  $riskEvaluationService  The risk evaluation engine
+     * @param  HoldService|null  $holdService  Service managing balance holds
+     * @param  OtpService|null  $otpService  Service managing one-time password challenges
+     */
     public function __construct(
         protected ?RiskEvaluationService $riskEvaluationService = null,
         protected ?HoldService $holdService = null,
@@ -34,7 +44,25 @@ class TransferService
     ) {}
 
     /**
-     * Universal double-entry transfer engine with integrated risk evaluation.
+     * Universal double-entry transfer engine with integrated risk evaluation, stepped-up OTP challenges, and compliance holds.
+     *
+     * @param  Account  $fromAccount  The sender / debit source account
+     * @param  Account  $toAccount  The receiver / credit destination account
+     * @param  int  $amount  The principal transfer amount in smallest currency units (paisa/cents)
+     * @param  TransactionType  $type  The domain transaction type categorization
+     * @param  string  $idempotencyKey  Unique client or operation idempotency key
+     * @param  int|null  $initiatedByUserId  The user ID executing the action
+     * @param  int  $feeAmount  Platform service fee in smallest currency units (paisa/cents)
+     * @param  array<string, mixed>  $metadata  Additional contextual attributes (e.g. notes, tags)
+     * @param  string|null  $reference  Custom transaction reference or generated default
+     * @param  string|null  $otpCode  User-submitted 6-digit OTP verification code if challenged
+     * @return Transaction The completed financial transaction entity
+     *
+     * @throws TransactionHeldForReviewException If risk score triggers an automated compliance hold
+     * @throws RiskChallengeRequiredException If risk score requires a stepped-up OTP challenge
+     * @throws ValidationException If submitted OTP code is invalid or expired
+     * @throws RuntimeException If balances, accounts, or ledger locks fail
+     * @throws Throwable If any database transaction errors occur
      */
     public function executeWithRiskCheck(
         Account $fromAccount,
@@ -135,17 +163,22 @@ class TransferService
     }
 
     /**
-     * Universal double-entry transfer engine.
+     * Universal double-entry ledger transfer engine executing atomic debit and credit entries.
      *
-     * @param  Account  $fromAccount  The sender/debit account
-     * @param  Account  $toAccount  The receiver/credit account
-     * @param  int  $amount  The transfer amount in smallest currency units
-     * @param  TransactionType  $type  The domain transaction type
+     * @param  Account  $fromAccount  The sender / debit source account
+     * @param  Account  $toAccount  The receiver / credit destination account
+     * @param  int  $amount  The transfer amount in smallest currency units (paisa/cents)
+     * @param  TransactionType  $type  The domain transaction type categorization
      * @param  string  $idempotencyKey  Unique client or operation idempotency key
-     * @param  int|null  $initiatedByUserId  The user initiating this action
-     * @param  int  $feeAmount  Optional fee taken by platform
-     * @param  array  $metadata  Additional contextual attributes
-     * @param  string|null  $reference  Custom transaction reference
+     * @param  int|null  $initiatedByUserId  The user ID executing the action
+     * @param  int  $feeAmount  Optional platform fee in smallest currency units (paisa/cents)
+     * @param  array<string, mixed>  $metadata  Additional contextual attributes
+     * @param  string|null  $reference  Custom transaction reference string
+     * @param  bool  $dispatchNotifications  Whether to dispatch asynchronous user notifications
+     * @return Transaction The completed financial transaction record
+     *
+     * @throws RuntimeException If amount is invalid, accounts are identical, or balances are insufficient
+     * @throws Throwable If database transaction fails
      */
     public function transfer(
         Account $fromAccount,

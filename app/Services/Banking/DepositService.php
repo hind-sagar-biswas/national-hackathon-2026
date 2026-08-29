@@ -14,14 +14,30 @@ use App\Notifications\Banking\DepositFailedNotification;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
+/**
+ * Service class managing multi-channel external deposit requests, compliance approvals, and ledger crediting.
+ */
 class DepositService
 {
+    /**
+     * Create a new DepositService instance.
+     *
+     * @param  TransferService  $transferService  The core double-entry transfer engine
+     */
     public function __construct(
         protected TransferService $transferService,
     ) {}
 
     /**
-     * Initiate an external deposit request.
+     * Initiate an external deposit request for a user wallet.
+     *
+     * @param  User  $user  The user requesting the deposit
+     * @param  DepositProvider  $provider  Payment channel/provider (bKash, Nagad, Bank, Cash)
+     * @param  string  $providerRef  Transaction reference or deposit slip ID from provider
+     * @param  int  $amount  The requested deposit amount in smallest currency units (paisa/cents)
+     * @return DepositRequest The newly created pending deposit request entity
+     *
+     * @throws RuntimeException If deposit amount is not positive
      */
     public function initiate(
         User $user,
@@ -44,6 +60,12 @@ class DepositService
 
     /**
      * Confirm a deposit request by debiting cash_reserve asset and crediting user wallet.
+     *
+     * @param  DepositRequest  $depositRequest  The pending deposit request entity to confirm
+     * @param  string|null  $idempotencyKey  Optional custom idempotency key
+     * @return Transaction The completed deposit transaction
+     *
+     * @throws RuntimeException If deposit is not pending, system account is missing, or user wallet is inactive
      */
     public function confirm(DepositRequest $depositRequest, ?string $idempotencyKey = null): Transaction
     {
@@ -94,7 +116,12 @@ class DepositService
     }
 
     /**
-     * Mark a deposit request as failed / rejected.
+     * Mark a deposit request as failed / rejected and dispatch notification to the user.
+     *
+     * @param  DepositRequest  $depositRequest  The pending deposit request entity to reject
+     * @param  string|null  $reason  Optional rejection explanation for compliance audit
+     *
+     * @throws RuntimeException If deposit request is not pending
      */
     public function reject(DepositRequest $depositRequest, ?string $reason = null): void
     {

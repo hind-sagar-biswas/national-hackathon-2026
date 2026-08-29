@@ -18,8 +18,17 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
 
+/**
+ * Service class managing the peer-to-peer micro-loan lifecycle, disbursements, repayments, and debt waivers.
+ */
 class LoanService
 {
+    /**
+     * Create a new LoanService instance.
+     *
+     * @param  TransferService  $transferService  The core double-entry transfer engine
+     * @param  MoneyRequestService  $moneyRequestService  Service managing direct money and loan requests
+     */
     public function __construct(
         protected TransferService $transferService,
         protected MoneyRequestService $moneyRequestService,
@@ -27,6 +36,16 @@ class LoanService
 
     /**
      * Request a peer-to-peer loan from a prospective lender.
+     *
+     * @param  User  $borrower  The user requesting the loan funds
+     * @param  User  $lender  The prospective lender being asked for funds
+     * @param  int  $principalAmount  Principal loan amount in smallest currency units (paisa/cents)
+     * @param  CarbonInterface|null  $dueAt  Agreed loan repayment due date
+     * @param  string|null  $note  Optional loan purpose or contract terms
+     * @param  CarbonInterface|null  $expiresAt  Expiration date of the loan request proposal
+     * @return MoneyRequest The generated loan-type money request
+     *
+     * @throws RuntimeException If amount is non-positive, users are identical, or wallets are missing
      */
     public function requestLoan(
         User $borrower,
@@ -63,7 +82,17 @@ class LoanService
     }
 
     /**
-     * Disburse a peer-to-peer loan from lender to borrower.
+     * Disburse a peer-to-peer loan from lender to borrower directly.
+     *
+     * @param  User  $lender  The user lending the capital
+     * @param  User  $borrower  The recipient borrower receiving the funds
+     * @param  int  $principalAmount  Principal loan amount in smallest currency units (paisa/cents)
+     * @param  CarbonInterface|null  $dueAt  Repayment due date
+     * @param  string|null  $note  Optional loan description
+     * @param  string|null  $idempotencyKey  Unique operation idempotency key
+     * @return Loan The newly established active Loan record
+     *
+     * @throws RuntimeException If amount is invalid, users are identical, or accounts are missing
      */
     public function disburse(
         User $lender,
@@ -131,6 +160,13 @@ class LoanService
 
     /**
      * Record a partial or full loan repayment from borrower to lender.
+     *
+     * @param  Loan  $loan  The active loan entity to repay
+     * @param  int  $amount  The repayment amount in smallest currency units (paisa/cents)
+     * @param  string|null  $idempotencyKey  Unique operation idempotency key
+     * @return LoanRepayment The newly created loan repayment record
+     *
+     * @throws RuntimeException If amount is invalid, loan is not active, or amount exceeds debt
      */
     public function repay(
         Loan $loan,
@@ -211,7 +247,12 @@ class LoanService
     }
 
     /**
-     * Forgive/waive a loan balance (status change only, no money movement).
+     * Forgive / waive an outstanding loan balance without moving funds.
+     *
+     * @param  Loan  $loan  The loan entity to be forgiven
+     * @param  User  $lender  The lender authorizing the waiver
+     *
+     * @throws RuntimeException If user is not the lender or loan cannot be waived
      */
     public function waive(Loan $loan, User $lender): void
     {

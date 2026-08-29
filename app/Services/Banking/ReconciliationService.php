@@ -12,10 +12,16 @@ use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Service class performing continuous mathematical reconciliation, zero-sum verification, and general ledger snapshots.
+ */
 class ReconciliationService
 {
     /**
      * Snapshot account category balance totals into general_ledger_summaries.
+     *
+     * @param  CarbonInterface|null  $asOf  Target timestamp for the rollup
+     * @return array{as_of: string, totals: array<string, int>} Array of category balance totals in paisa
      */
     public function rollupGeneralLedger(?CarbonInterface $asOf = null): array
     {
@@ -48,7 +54,21 @@ class ReconciliationService
     }
 
     /**
-     * High-performance incremental audit using watermarked checkpoints and grouped SQL.
+     * High-performance incremental audit using watermarked checkpoints and grouped SQL aggregation.
+     *
+     * @param  bool  $createCheckpointOnPass  Whether to persist a new checkpoint snapshot if audit succeeds
+     * @return array{
+     *     passed: bool,
+     *     watermark_id: int,
+     *     new_watermark_id: int,
+     *     delta_entries_processed: int,
+     *     accounts_audited: int,
+     *     mismatch_count: int,
+     *     mismatches: array<int, array{account_id: int, slug: string, owner_type: string, category: string, stored_cleared_balance: int, computed_cleared_balance: int, discrepancy: int}>,
+     *     global_ledger: array{total_debits: int, total_credits: int, balanced: bool},
+     *     user_wallets_total: int,
+     *     platform_equity_cleared: int
+     * } Detailed audit report results
      */
     public function auditSystemIntegrity(bool $createCheckpointOnPass = true): array
     {

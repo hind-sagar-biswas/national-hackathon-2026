@@ -9,10 +9,21 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
+/**
+ * Service class managing balance reservation holds, escrow locks, and release mechanisms.
+ */
 class HoldService
 {
     /**
-     * Create an active balance hold on an account.
+     * Create an active balance hold on an account, reducing available balance while keeping cleared balance intact.
+     *
+     * @param  Account  $account  The account where funds will be reserved
+     * @param  int  $amount  The hold amount in smallest currency units (paisa/cents)
+     * @param  string  $reason  Human-readable description / reason for placing the hold
+     * @param  Model|null  $reference  Optional polymorphic model reference (e.g. BillSplit, MoneyRequest)
+     * @return Hold The newly created active hold record
+     *
+     * @throws RuntimeException If hold amount is non-positive or available balance is insufficient
      */
     public function createHold(
         Account $account,
@@ -49,7 +60,13 @@ class HoldService
     }
 
     /**
-     * Capture a hold by fulfilling the underlying transfer callback.
+     * Capture a hold by fulfilling the underlying transfer callback and marking the hold as captured.
+     *
+     * @param  Hold  $hold  The active hold entity to be captured
+     * @param  callable(Account): mixed  $transferCallback  Callback performing the debit / transfer logic
+     * @return mixed The return value of the transfer callback
+     *
+     * @throws RuntimeException If hold is not currently active
      */
     public function captureHold(Hold $hold, callable $transferCallback): mixed
     {
@@ -82,7 +99,9 @@ class HoldService
     }
 
     /**
-     * Release an active hold and restore available balance.
+     * Release an active hold and restore the reserved available balance to the account.
+     *
+     * @param  Hold  $hold  The active hold entity to release
      */
     public function releaseHold(Hold $hold): void
     {

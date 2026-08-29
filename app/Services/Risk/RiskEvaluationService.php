@@ -12,13 +12,18 @@ use App\Services\Risk\Rules\NewBeneficiaryRiskRule;
 use App\Services\Risk\Rules\RapidDrainRiskRule;
 use App\Services\Risk\Rules\VelocityRiskRule;
 
+/**
+ * Service class orchestrating fraud and security risk evaluation pipelines for transactions.
+ */
 class RiskEvaluationService
 {
-    /** @var array<RiskRuleInterface> */
+    /** @var array<RiskRuleInterface> Collection of registered risk assessment rules */
     protected array $rules;
 
     /**
-     * @param  array<RiskRuleInterface>|null  $rules
+     * Create a new RiskEvaluationService instance.
+     *
+     * @param  array<RiskRuleInterface>|null  $rules  Optional custom list of risk rules to initialize
      */
     public function __construct(?array $rules = null)
     {
@@ -31,7 +36,9 @@ class RiskEvaluationService
     }
 
     /**
-     * Add a custom or dynamic rule to the pipeline.
+     * Add a custom or dynamic risk rule to the evaluation pipeline.
+     *
+     * @param  RiskRuleInterface  $rule  The rule instance to append
      */
     public function addRule(RiskRuleInterface $rule): self
     {
@@ -41,7 +48,10 @@ class RiskEvaluationService
     }
 
     /**
-     * Evaluate context across all rules and compute risk score & action.
+     * Evaluate context across all registered rules and compute aggregated risk score & recommended action.
+     *
+     * @param  RiskContextDTO  $context  The transaction and sender context parameters
+     * @return RiskAssessmentResult The structured risk evaluation result
      */
     public function evaluate(RiskContextDTO $context): RiskAssessmentResult
     {
@@ -75,9 +85,10 @@ class RiskEvaluationService
     }
 
     /**
-     * Map aggregated risk score to RiskLevel and RiskAction.
+     * Map aggregated risk score to RiskLevel and RiskAction thresholds.
      *
-     * @return array{0: RiskLevel, 1: RiskAction}
+     * @param  int  $score  The aggregate risk score (0-100)
+     * @return array{0: RiskLevel, 1: RiskAction} Tuple containing risk level and recommended enforcement action
      */
     protected function determineLevelAndAction(int $score): array
     {

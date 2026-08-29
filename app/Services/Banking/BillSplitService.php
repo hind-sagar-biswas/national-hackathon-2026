@@ -21,8 +21,18 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
+/**
+ * Service class orchestrating multi-participant expense splitting across 4 calculation modes with escrow holds.
+ */
 class BillSplitService
 {
+    /**
+     * Create a new BillSplitService instance.
+     *
+     * @param  TransferService  $transferService  The core double-entry transfer engine
+     * @param  HoldService  $holdService  Service managing balance holds
+     * @param  MoneyRequestService  $moneyRequestService  Service managing money requests
+     */
     public function __construct(
         protected TransferService $transferService,
         protected HoldService $holdService,
@@ -30,9 +40,13 @@ class BillSplitService
     ) {}
 
     /**
-     * Create a new multi-participant bill split.
+     * Create a new multi-participant bill split and dispatch invitations.
      *
-     * @param  array{title: string, total_amount: int, mode: BillSplitMode, participants: array<array{user_id: int, value?: float}>, merchant_account_id?: int|null, merchant_name?: string|null, note?: string|null, expires_in_days?: int}  $data
+     * @param  User  $initiator  The user organizing and creating the bill split
+     * @param  array{title: string, total_amount: int, mode: BillSplitMode|string, participants: array<array{user_id: int, value?: float}>, merchant_account_id?: int|null, merchant_name?: string|null, note?: string|null, expires_in_days?: int}  $data  Payload configuring the split
+     * @return BillSplit The newly created BillSplit entity loaded with relations
+     *
+     * @throws ValidationException If initiator wallet is missing, amount is invalid, or participants configuration is invalid
      */
     public function createBillSplit(User $initiator, array $data): BillSplit
     {
@@ -157,7 +171,12 @@ class BillSplitService
     }
 
     /**
-     * Accept participation in a bill split (places a Hold on participant wallet).
+     * Accept participation in a bill split (places an escrow balance hold on participant wallet).
+     *
+     * @param  BillSplitParticipant  $participant  The participant entity accepting the share
+     * @return BillSplit The updated bill split model
+     *
+     * @throws ValidationException If bill split is not pending, expired, or participant has insufficient balance
      */
     public function acceptParticipant(BillSplitParticipant $participant): BillSplit
     {
@@ -238,7 +257,13 @@ class BillSplitService
     }
 
     /**
-     * Reject participation in a bill split (triggers collective failure and releases any active holds).
+     * Reject participation in a bill split (triggers collective failure and releases pre-placed holds).
+     *
+     * @param  BillSplitParticipant  $participant  The participant rejecting the invitation
+     * @param  string|null  $reason  Optional reason for declining
+     * @return BillSplit The updated bill split entity
+     *
+     * @throws ValidationException If bill split is not pending
      */
     public function rejectParticipant(BillSplitParticipant $participant, ?string $reason = null): BillSplit
     {
@@ -264,7 +289,13 @@ class BillSplitService
     }
 
     /**
-     * Cancel a pending bill split by initiator.
+     * Cancel a pending bill split by its initiator.
+     *
+     * @param  BillSplit  $billSplit  The pending bill split entity
+     * @param  User  $initiator  The user attempting to cancel
+     * @return BillSplit The updated bill split entity
+     *
+     * @throws ValidationException If user is not the initiator or bill split is not pending
      */
     public function cancelBillSplit(BillSplit $billSplit, User $initiator): BillSplit
     {
@@ -286,7 +317,9 @@ class BillSplitService
     }
 
     /**
-     * Expire a pending bill split and release pre-placed holds.
+     * Expire a pending bill split and release all pre-placed holds.
+     *
+     * @param  BillSplit  $billSplit  The bill split entity to expire
      */
     public function expireBillSplit(BillSplit $billSplit): void
     {
@@ -297,6 +330,8 @@ class BillSplitService
 
     /**
      * Atomic collective settlement when all participants have accepted.
+     *
+     * @param  BillSplit  $billSplit  The fully accepted bill split entity
      */
     protected function settleBillSplit(BillSplit $billSplit): void
     {
@@ -389,7 +424,10 @@ class BillSplitService
     }
 
     /**
-     * Atomic collective failure & release of all pre-placed holds.
+     * Atomic collective failure and release of all pre-placed holds.
+     *
+     * @param  BillSplit  $billSplit  The bill split entity being failed
+     * @param  string  $reason  Description of the failure trigger
      */
     protected function failBillSplit(BillSplit $billSplit, string $reason): void
     {
@@ -406,7 +444,6 @@ class BillSplitService
                     try {
                         $this->holdService->releaseHold($participant->hold);
                     } catch (Throwable) {
-                        // Hold might already be released
                     }
                 }
 
@@ -432,8 +469,13 @@ class BillSplitService
     /**
      * Calculate share amounts across participants for equal, percentage, and weighted modes.
      *
-     * @param  array<array{user_id: int, value?: float}>  $participants
-     * @return array<array{user_id: int, share_amount: int, share_value: float}>
+     * @param  int  $totalAmount  Total bill amount in smallest currency units (paisa/cents)
+     * @param  BillSplitMode  $mode  The split mode
+     * @param  array<array{user_id: int, value?: float}>  $participants  List of participant user IDs and optional weights/percentages
+     * @param  int  $initiatorId  The initiator user ID who absorbs rounding cents
+     * @return array<int, array{user_id: int, share_amount: int, share_value: float}>
+     *
+     * @throws ValidationException If participant count or percentage sum is invalid
      */
     protected function calculateShares(int $totalAmount, BillSplitMode $mode, array $participants, int $initiatorId): array
     {
