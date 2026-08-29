@@ -82,46 +82,44 @@ class LoanController extends Controller
 
     public function store(StoreRequest $request, LoanService $loanService)
     {
-        /** @var User $lender */
-        $lender = Auth::user();
+        /** @var User $borrower */
+        $borrower = Auth::user();
 
-        $borrowerInput = trim($request->validated('borrower'));
+        $lenderInput = trim($request->validated('lender'));
 
-        /** @var User|null $borrower */
-        $borrower = User::where('email', $borrowerInput)
-            ->orWhere('phone', $borrowerInput)
+        /** @var User|null $lender */
+        $lender = User::where('email', $lenderInput)
+            ->orWhere('phone', $lenderInput)
             ->first();
 
-        if (! $borrower) {
+        if (! $lender) {
             throw ValidationException::withMessages([
-                'borrower' => 'No user found with the provided email address or phone number.',
+                'lender' => 'No user found with the provided email address or phone number.',
             ]);
         }
 
-        if ($borrower->id === $lender->id) {
+        if ($lender->id === $borrower->id) {
             throw ValidationException::withMessages([
-                'borrower' => 'You cannot disburse a loan to yourself.',
+                'lender' => 'You cannot request a loan from yourself.',
             ]);
         }
 
         $principalAmount = toPaisa($request->validated('principal_amount'));
-        $dueAt = $request->validated('due_at') ? Carbon::parse($request->validated('due_at')) : null;
+        $dueAt = Carbon::parse($request->validated('due_at'));
         $note = $request->validated('note');
-        $idempotencyKey = $request->validated('idempotency_key');
 
         try {
-            $loan = $loanService->disburse(
-                lender: $lender,
+            $loanService->requestLoan(
                 borrower: $borrower,
+                lender: $lender,
                 principalAmount: $principalAmount,
                 dueAt: $dueAt,
                 note: $note,
-                idempotencyKey: $idempotencyKey,
             );
 
             $formattedAmount = formatPaisa($principalAmount);
 
-            return back()->with('success', "Loan #{$loan->id} of {$formattedAmount} BDT disbursed successfully to {$borrower->name}.");
+            return back()->with('success', "Loan request of {$formattedAmount} BDT submitted to {$lender->name}. Funds will be disbursed once they approve.");
         } catch (Throwable $e) {
             throw ValidationException::withMessages([
                 'principal_amount' => $e->getMessage(),

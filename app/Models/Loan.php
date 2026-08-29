@@ -19,6 +19,7 @@ class Loan extends Model
         'outstanding_amount',
         'status',
         'disbursement_txn_id',
+        'money_request_id',
         'due_at',
         'note',
     ];
@@ -27,6 +28,7 @@ class Loan extends Model
         'status',
         'lender_user_id',
         'borrower_user_id',
+        'money_request_id',
         'lender.email',
         'borrower.email',
     ];
@@ -63,6 +65,11 @@ class Loan extends Model
     public function disbursementTransaction(): BelongsTo
     {
         return $this->belongsTo(Transaction::class, 'disbursement_txn_id');
+    }
+
+    public function moneyRequest(): BelongsTo
+    {
+        return $this->belongsTo(MoneyRequest::class);
     }
 
     public function repayments(): HasMany

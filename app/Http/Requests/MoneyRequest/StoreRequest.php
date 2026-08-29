@@ -17,7 +17,9 @@ class StoreRequest extends FormRequest
         return [
             'payer' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:10'],
+            'type' => ['nullable', 'string', 'in:standard,loan'],
             'expires_in_days' => ['nullable', 'integer', 'min:1', 'max:30'],
+            'due_at' => ['nullable', 'date', 'after:today'],
             'pre_hold' => ['nullable', 'boolean'],
             'note' => ['nullable', 'string', 'max:255'],
         ];

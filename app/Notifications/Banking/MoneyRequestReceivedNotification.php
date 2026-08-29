@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Banking;
 
+use App\Enums\MoneyRequestType;
 use App\Models\MoneyRequest;
 use App\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -36,13 +37,21 @@ class MoneyRequestReceivedNotification extends Notification
 
     protected function getNotificationTitle(): string
     {
-        return 'New Money Request';
+        return $this->moneyRequest->type === MoneyRequestType::LOAN
+            ? 'New Loan Request'
+            : 'New Money Request';
     }
 
     protected function getNotificationMessage(): string
     {
         $formatted = formatPaisa($this->moneyRequest->amount);
         $expires = $this->moneyRequest->expires_at ? " (Expires: {$this->moneyRequest->expires_at->diffForHumans()})" : '';
+
+        if ($this->moneyRequest->type === MoneyRequestType::LOAN) {
+            $due = $this->moneyRequest->due_at ? " (Proposed repayment by: {$this->moneyRequest->due_at->toFormattedDateString()})" : '';
+
+            return "{$this->requesterName} has requested a peer-to-peer loan of {$formatted} {$this->currency} from you.{$due}{$expires}";
+        }
 
         return "{$this->requesterName} has requested {$formatted} {$this->currency} from you.{$expires}";
     }
@@ -51,9 +60,12 @@ class MoneyRequestReceivedNotification extends Notification
     {
         return [
             'money_request_id' => $this->moneyRequest->id,
+            'type' => $this->moneyRequest->type?->value,
             'amount' => $this->moneyRequest->amount,
             'requester_name' => $this->requesterName,
             'expires_at' => $this->moneyRequest->expires_at?->toIso8601String(),
+            'due_at' => $this->moneyRequest->due_at?->toIso8601String(),
+            'note' => $this->moneyRequest->note,
             'has_hold' => (bool) $this->moneyRequest->hold_id,
             'currency' => $this->currency,
         ];

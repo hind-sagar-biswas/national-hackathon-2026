@@ -2,11 +2,15 @@
 
 namespace App\Services\Banking;
 
+use App\Enums\LoanStatus;
+use App\Enums\MoneyRequestType;
 use App\Enums\RequestStatus;
 use App\Enums\TransactionType;
 use App\Models\Account;
+use App\Models\Loan;
 use App\Models\MoneyRequest;
 use App\Models\Transaction;
+use App\Notifications\Banking\LoanDisbursedNotification;
 use App\Notifications\Banking\MoneyRequestApprovedNotification;
 use App\Notifications\Banking\MoneyRequestExpiredNotification;
 use App\Notifications\Banking\MoneyRequestReceivedNotification;
@@ -29,7 +33,10 @@ class MoneyRequestService
         Account $requesterAccount,
         Account $payerAccount,
         int $amount,
+        MoneyRequestType $type = MoneyRequestType::STANDARD,
         ?CarbonInterface $expiresAt = null,
+        ?CarbonInterface $dueAt = null,
+        ?string $note = null,
         bool $preHold = false,
     ): MoneyRequest {
         if ($amount <= 0) {
@@ -42,13 +49,16 @@ class MoneyRequestService
 
         $expiresAt = $expiresAt ?: now()->addDays(3);
 
-        return DB::transaction(function () use ($requesterAccount, $payerAccount, $amount, $expiresAt, $preHold) {
+        return DB::transaction(function () use ($requesterAccount, $payerAccount, $amount, $type, $expiresAt, $dueAt, $note, $preHold) {
             $moneyRequest = MoneyRequest::create([
                 'requester_account_id' => $requesterAccount->id,
                 'payer_account_id' => $payerAccount->id,
                 'amount' => $amount,
+                'type' => $type,
                 'status' => RequestStatus::PENDING,
                 'expires_at' => $expiresAt,
+                'due_at' => $dueAt,
+                'note' => $note,
             ]);
 
             if ($preHold) {
@@ -75,7 +85,7 @@ class MoneyRequestService
     }
 
     /**
-     * Approve and settle a money request.
+     * Approve and settle a money request (creates Loan if type is loan).
      */
     public function approve(MoneyRequest $moneyRequest, ?string $idempotencyKey = null): Transaction
     {
@@ -89,16 +99,18 @@ class MoneyRequestService
         }
 
         $idempotencyKey = $idempotencyKey ?: "req_settle_{$moneyRequest->id}";
+        $isLoan = ($moneyRequest->type === MoneyRequestType::LOAN);
+        $transactionType = $isLoan ? TransactionType::LOAN_DISBURSEMENT : TransactionType::REQUEST_SETTLEMENT;
 
-        return DB::transaction(function () use ($moneyRequest, $idempotencyKey) {
+        return DB::transaction(function () use ($moneyRequest, $idempotencyKey, $transactionType, $isLoan) {
             /** @var Transaction $transaction */
             if ($moneyRequest->hold_id && $moneyRequest->hold) {
-                $transaction = $this->holdService->captureHold($moneyRequest->hold, function (Account $payerAccount) use ($moneyRequest, $idempotencyKey) {
+                $transaction = $this->holdService->captureHold($moneyRequest->hold, function (Account $payerAccount) use ($moneyRequest, $idempotencyKey, $transactionType) {
                     return $this->transferService->transfer(
                         fromAccount: $payerAccount,
                         toAccount: $moneyRequest->requesterAccount,
                         amount: $moneyRequest->amount,
-                        type: TransactionType::REQUEST_SETTLEMENT,
+                        type: $transactionType,
                         idempotencyKey: $idempotencyKey,
                         initiatedByUserId: $payerAccount->user_id,
                         metadata: ['money_request_id' => $moneyRequest->id],
@@ -109,23 +121,46 @@ class MoneyRequestService
                     fromAccount: $moneyRequest->payerAccount,
                     toAccount: $moneyRequest->requesterAccount,
                     amount: $moneyRequest->amount,
-                    type: TransactionType::REQUEST_SETTLEMENT,
+                    type: $transactionType,
                     idempotencyKey: $idempotencyKey,
                     initiatedByUserId: $moneyRequest->payerAccount->user_id,
                     metadata: ['money_request_id' => $moneyRequest->id],
                 );
             }
 
+            $loan = null;
+            if ($isLoan) {
+                /** @var Loan $loan */
+                $loan = Loan::create([
+                    'lender_user_id' => $moneyRequest->payerAccount->user_id,
+                    'borrower_user_id' => $moneyRequest->requesterAccount->user_id,
+                    'principal_amount' => $moneyRequest->amount,
+                    'outstanding_amount' => $moneyRequest->amount,
+                    'status' => LoanStatus::ACTIVE,
+                    'disbursement_txn_id' => $transaction->id,
+                    'money_request_id' => $moneyRequest->id,
+                    'due_at' => $moneyRequest->due_at,
+                    'note' => $moneyRequest->note,
+                ]);
+            }
+
             $moneyRequest->update([
                 'status' => RequestStatus::APPROVED,
                 'transaction_id' => $transaction->id,
+                'loan_id' => $loan?->id,
             ]);
 
-            DB::afterCommit(function () use ($moneyRequest) {
+            DB::afterCommit(function () use ($moneyRequest, $loan) {
                 $requesterUser = $moneyRequest->requesterAccount->user;
+                $payerUser = $moneyRequest->payerAccount->user;
+                $payerName = $payerUser ? $payerUser->name : 'Payer';
+
                 if ($requesterUser) {
-                    $payerName = $moneyRequest->payerAccount->user ? $moneyRequest->payerAccount->user->name : 'Payer';
                     $requesterUser->notify(new MoneyRequestApprovedNotification($moneyRequest, $payerName));
+
+                    if ($loan) {
+                        $requesterUser->notify(new LoanDisbursedNotification($loan, $payerName));
+                    }
                 }
             });
 

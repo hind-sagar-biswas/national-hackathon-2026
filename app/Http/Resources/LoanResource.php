@@ -28,6 +28,7 @@ class LoanResource extends JsonResource
             ],
             'status' => $this->status,
             'disbursement_txn_id' => $this->disbursement_txn_id,
+            'money_request_id' => $this->money_request_id,
             'note' => $this->note,
             'due_at' => $this->due_at ? [
                 'raw' => $this->due_at->toIso8601String(),
@@ -35,6 +36,7 @@ class LoanResource extends JsonResource
             ] : null,
             'lender' => UserResource::make($this->whenLoaded('lender')),
             'borrower' => UserResource::make($this->whenLoaded('borrower')),
+            'money_request' => MoneyRequestResource::make($this->whenLoaded('moneyRequest')),
             'disbursement_transaction' => TransactionResource::make($this->whenLoaded('disbursementTransaction')),
             'repayments' => LoanRepaymentResource::collection($this->whenLoaded('repayments')),
             'created_at' => [

@@ -3,9 +3,11 @@
 namespace App\Services\Banking;
 
 use App\Enums\LoanStatus;
+use App\Enums\MoneyRequestType;
 use App\Enums\TransactionType;
 use App\Models\Loan;
 use App\Models\LoanRepayment;
+use App\Models\MoneyRequest;
 use App\Models\User;
 use App\Notifications\Banking\LoanDisbursedNotification;
 use App\Notifications\Banking\LoanRepaymentReceivedNotification;
@@ -20,7 +22,45 @@ class LoanService
 {
     public function __construct(
         protected TransferService $transferService,
+        protected MoneyRequestService $moneyRequestService,
     ) {}
+
+    /**
+     * Request a peer-to-peer loan from a prospective lender.
+     */
+    public function requestLoan(
+        User $borrower,
+        User $lender,
+        int $principalAmount,
+        ?CarbonInterface $dueAt = null,
+        ?string $note = null,
+        ?CarbonInterface $expiresAt = null,
+    ): MoneyRequest {
+        if ($principalAmount <= 0) {
+            throw new RuntimeException('Principal amount must be greater than zero.');
+        }
+
+        if ($borrower->id === $lender->id) {
+            throw new RuntimeException('Borrower and lender cannot be the same user.');
+        }
+
+        $borrowerAccount = $borrower->account;
+        $lenderAccount = $lender->account;
+
+        if (! $borrowerAccount || ! $lenderAccount) {
+            throw new RuntimeException('Both borrower and lender must have active wallets.');
+        }
+
+        return $this->moneyRequestService->createRequest(
+            requesterAccount: $borrowerAccount,
+            payerAccount: $lenderAccount,
+            amount: $principalAmount,
+            type: MoneyRequestType::LOAN,
+            expiresAt: $expiresAt,
+            dueAt: $dueAt,
+            note: $note,
+        );
+    }
 
     /**
      * Disburse a peer-to-peer loan from lender to borrower.

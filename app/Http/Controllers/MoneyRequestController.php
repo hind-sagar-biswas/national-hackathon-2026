@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\MoneyRequestType;
 use App\Enums\RequestStatus;
 use App\Http\Requests\MoneyRequest\IndexRequest;
 use App\Http\Requests\MoneyRequest\StoreRequest;
@@ -9,6 +10,7 @@ use App\Http\Resources\MoneyRequestResource;
 use App\Models\MoneyRequest;
 use App\Models\User;
 use App\Services\Banking\MoneyRequestService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -101,8 +103,12 @@ class MoneyRequestController extends Controller
         }
 
         $amount = toPaisa($request->validated('amount'));
+        $rawType = $request->validated('type');
+        $type = $rawType ? MoneyRequestType::from($rawType) : MoneyRequestType::STANDARD;
         $expiresInDays = (int) ($request->validated('expires_in_days') ?? 3);
         $expiresAt = now()->addDays($expiresInDays);
+        $dueAt = $request->validated('due_at') ? Carbon::parse($request->validated('due_at')) : null;
+        $note = $request->validated('note');
         $preHold = (bool) $request->validated('pre_hold', false);
 
         try {
@@ -110,13 +116,17 @@ class MoneyRequestController extends Controller
                 requesterAccount: $requesterAccount,
                 payerAccount: $payerAccount,
                 amount: $amount,
+                type: $type,
                 expiresAt: $expiresAt,
+                dueAt: $dueAt,
+                note: $note,
                 preHold: $preHold,
             );
 
             $formattedAmount = formatPaisa($amount);
+            $label = $type === MoneyRequestType::LOAN ? 'Loan request' : 'Money request';
 
-            return back()->with('success', "Money request for {$formattedAmount} BDT sent to {$payer->name}.");
+            return back()->with('success', "{$label} for {$formattedAmount} BDT sent to {$payer->name}.");
         } catch (Throwable $e) {
             throw ValidationException::withMessages([
                 'amount' => $e->getMessage(),
