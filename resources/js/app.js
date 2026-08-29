@@ -9,7 +9,20 @@ import VueShortkey from 'vue-three-shortkey';
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import DaisyPrimePreset from './daisy-prime';
-import { faGaugeHigh, faMoneyBillTransfer, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { 
+    faBuildingColumns,
+    faFileInvoiceDollar,
+    faGaugeHigh, 
+    faHandHoldingDollar,
+    faHandHoldingHand,
+    faLock,
+    faMoneyBillTransfer, 
+    faReceipt,
+    faScaleBalanced,
+    faShieldHalved,
+    faUsers,
+    faWallet
+} from '@fortawesome/free-solid-svg-icons';
 import { configureEcho } from "@laravel/echo-vue";
 
 axios.defaults.withCredentials = true;
@@ -19,7 +32,20 @@ configureEcho({ broadcaster: "reverb" });
 
 const appName = import.meta.env.VITE_APP_NAME || 'Admin Panel';
 
-library.add(faGaugeHigh, faMoneyBillTransfer, faUsers)
+library.add(
+    faGaugeHigh, 
+    faMoneyBillTransfer, 
+    faWallet,
+    faHandHoldingDollar,
+    faHandHoldingHand,
+    faReceipt,
+    faUsers,
+    faBuildingColumns,
+    faShieldHalved,
+    faScaleBalanced,
+    faFileInvoiceDollar,
+    faLock
+);
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
