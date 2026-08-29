@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class AdminResource extends JsonResource
+class LedgerEntryResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -16,9 +16,19 @@ class AdminResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'user_id' => $this->user_id,
-            'is_super' => $this->is_super,
-            'user' => UserResource::make($this->whenLoaded('user')),
+            'transaction_id' => $this->transaction_id,
+            'account_id' => $this->account_id,
+            'direction' => $this->direction,
+            'amount' => [
+                'raw' => $this->amount,
+                'formatted' => number_format(($this->amount ?? 0) / 100, 2),
+            ],
+            'balance_after' => [
+                'raw' => $this->balance_after,
+                'formatted' => number_format(($this->balance_after ?? 0) / 100, 2),
+            ],
+            'transaction' => TransactionResource::make($this->whenLoaded('transaction')),
+            'account' => AccountResource::make($this->whenLoaded('account')),
             'created_at' => [
                 'raw' => $this->created_at?->toIso8601String(),
                 'formatted' => $this->created_at?->diffForHumans(),

@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class AdminResource extends JsonResource
+class GeneralLedgerSummaryResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -16,9 +16,15 @@ class AdminResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'user_id' => $this->user_id,
-            'is_super' => $this->is_super,
-            'user' => UserResource::make($this->whenLoaded('user')),
+            'category' => $this->category,
+            'total' => [
+                'raw' => $this->total,
+                'formatted' => number_format(($this->total ?? 0) / 100, 2),
+            ],
+            'as_of' => $this->as_of ? [
+                'raw' => $this->as_of->toIso8601String(),
+                'formatted' => $this->as_of->diffForHumans(),
+            ] : null,
             'created_at' => [
                 'raw' => $this->created_at?->toIso8601String(),
                 'formatted' => $this->created_at?->diffForHumans(),

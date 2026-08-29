@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class AdminResource extends JsonResource
+class OperationEventResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -16,9 +16,17 @@ class AdminResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'user_id' => $this->user_id,
-            'is_super' => $this->is_super,
-            'user' => UserResource::make($this->whenLoaded('user')),
+            'operation_key' => $this->operation_key,
+            'status' => $this->status,
+            'from_account_id' => $this->from_account_id,
+            'to_account_id' => $this->to_account_id,
+            'amount' => [
+                'raw' => $this->amount,
+                'formatted' => number_format(($this->amount ?? 0) / 100, 2),
+            ],
+            'metadata' => $this->metadata,
+            'from_account' => AccountResource::make($this->whenLoaded('fromAccount')),
+            'to_account' => AccountResource::make($this->whenLoaded('toAccount')),
             'created_at' => [
                 'raw' => $this->created_at?->toIso8601String(),
                 'formatted' => $this->created_at?->diffForHumans(),
