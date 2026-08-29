@@ -41,11 +41,11 @@ defineOptions({
 
             <LogoutOtherBrowserSessionsForm :sessions="sessions" class="mt-10 sm:mt-0" />
 
-            <template v-if="$page.props.jetstream.hasAccountDeletionFeatures">
+            <!-- <template v-if="$page.props.jetstream.hasAccountDeletionFeatures">
                 <SectionBorder />
 
                 <DeleteUserForm class="mt-10 sm:mt-0" />
-            </template>
+            </template> -->
         </div>
     </div>
 </template>
