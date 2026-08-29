@@ -15,7 +15,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('transactions', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->ulid('id')->primary();
             $table->string('reference');
             $table->enum('type', EnumUtil::toArray(TransactionType::class))->index();
             $table->string('idempotency_key')->unique();
