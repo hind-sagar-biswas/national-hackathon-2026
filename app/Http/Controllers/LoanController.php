@@ -104,7 +104,7 @@ class LoanController extends Controller
             ]);
         }
 
-        $principalAmount = (int) $request->validated('principal_amount');
+        $principalAmount = toPaisa($request->validated('principal_amount'));
         $dueAt = $request->validated('due_at') ? Carbon::parse($request->validated('due_at')) : null;
         $note = $request->validated('note');
         $idempotencyKey = $request->validated('idempotency_key');
@@ -119,7 +119,9 @@ class LoanController extends Controller
                 idempotencyKey: $idempotencyKey,
             );
 
-            return back()->with('success', "Loan #{$loan->id} of {$principalAmount} BDT disbursed successfully to {$borrower->name}.");
+            $formattedAmount = formatPaisa($principalAmount);
+
+            return back()->with('success', "Loan #{$loan->id} of {$formattedAmount} BDT disbursed successfully to {$borrower->name}.");
         } catch (Throwable $e) {
             throw ValidationException::withMessages([
                 'principal_amount' => $e->getMessage(),
@@ -136,7 +138,7 @@ class LoanController extends Controller
             abort(403, 'Only the borrower can repay this loan.');
         }
 
-        $amount = (int) $request->validated('amount');
+        $amount = toPaisa($request->validated('amount'));
         $idempotencyKey = $request->validated('idempotency_key');
 
         try {
@@ -146,7 +148,9 @@ class LoanController extends Controller
                 idempotencyKey: $idempotencyKey,
             );
 
-            return back()->with('success', "Repayment of {$amount} BDT processed successfully.");
+            $formattedAmount = formatPaisa($amount);
+
+            return back()->with('success', "Repayment of {$formattedAmount} BDT processed successfully.");
         } catch (Throwable $e) {
             throw ValidationException::withMessages([
                 'amount' => $e->getMessage(),

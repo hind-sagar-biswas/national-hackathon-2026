@@ -41,7 +41,7 @@ class DepositFailedNotification extends Notification
 
     protected function getNotificationMessage(): string
     {
-        $formatted = number_format($this->depositRequest->amount);
+        $formatted = formatPaisa($this->depositRequest->amount);
         $providerName = ucfirst($this->depositRequest->provider->value);
         $reasonText = $this->reason ? " Reason: {$this->reason}." : '';
 

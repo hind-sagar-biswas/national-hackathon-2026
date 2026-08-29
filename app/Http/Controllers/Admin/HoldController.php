@@ -82,7 +82,9 @@ class HoldController extends Controller
         try {
             $holdService->releaseHold($hold);
 
-            return back()->with('success', "Hold #{$hold->id} for {$hold->amount} BDT has been released back to user wallet.");
+            $formattedAmount = formatPaisa($hold->amount);
+
+            return back()->with('success', "Hold #{$hold->id} for {$formattedAmount} BDT has been released back to user wallet.");
         } catch (Throwable $e) {
             throw ValidationException::withMessages([
                 'hold' => $e->getMessage(),

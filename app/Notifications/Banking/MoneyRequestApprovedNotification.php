@@ -41,7 +41,7 @@ class MoneyRequestApprovedNotification extends Notification
 
     protected function getNotificationMessage(): string
     {
-        $formatted = number_format($this->moneyRequest->amount);
+        $formatted = formatPaisa($this->moneyRequest->amount);
 
         return "{$this->payerName} approved your request for {$formatted} {$this->currency}. The funds are now in your wallet.";
     }

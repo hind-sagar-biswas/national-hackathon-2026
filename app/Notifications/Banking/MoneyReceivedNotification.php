@@ -42,7 +42,7 @@ class MoneyReceivedNotification extends Notification
 
     protected function getNotificationMessage(): string
     {
-        $formatted = number_format($this->amount);
+        $formatted = formatPaisa($this->amount);
 
         return "You received {$formatted} {$this->currency} from {$this->senderName}. (Ref: {$this->transaction->reference})";
     }

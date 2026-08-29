@@ -19,7 +19,7 @@ class StoreRequest extends FormRequest
         return [
             'provider' => ['required', new EnumClassRule(DepositProvider::class)],
             'provider_ref' => ['required', 'string', 'max:255'],
-            'amount' => ['required', 'integer', 'min:1'],
+            'amount' => ['required', 'numeric', 'min:10'],
         ];
     }
 
@@ -27,7 +27,7 @@ class StoreRequest extends FormRequest
     {
         return [
             'provider_ref.required' => 'Please provide the transaction ID or receipt reference from the provider.',
-            'amount.min' => 'Deposit amount must be at least 1.',
+            'amount.min' => 'Deposit amount must be at least 10 BDT.',
         ];
     }
 }

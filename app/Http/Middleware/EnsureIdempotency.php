@@ -63,7 +63,7 @@ class EnsureIdempotency
                 'transaction' => 'A transaction is currently in progress. Please wait a moment.',
             ]);
         }
-        
+
         try {
             /** @var Response $response */
             $response = $next($request);

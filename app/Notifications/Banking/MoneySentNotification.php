@@ -43,11 +43,11 @@ class MoneySentNotification extends Notification
 
     protected function getNotificationMessage(): string
     {
-        $formattedAmount = number_format($this->amount);
+        $formattedAmount = formatPaisa($this->amount);
         $message = "You sent {$formattedAmount} {$this->currency} to {$this->receiverName}. (Ref: {$this->transaction->reference})";
 
         if ($this->fee > 0) {
-            $formattedFee = number_format($this->fee);
+            $formattedFee = formatPaisa($this->fee);
             $message .= " Fee charged: {$formattedFee} {$this->currency}.";
         }
 

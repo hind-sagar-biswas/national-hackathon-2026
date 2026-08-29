@@ -15,7 +15,7 @@ class RepayRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'amount' => ['required', 'integer', 'min:1'],
+            'amount' => ['required', 'numeric', 'min:10'],
             'idempotency_key' => ['required', 'string', 'max:255'],
         ];
     }
@@ -23,7 +23,7 @@ class RepayRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'amount.min' => 'Repayment amount must be at least 1.',
+            'amount.min' => 'Repayment amount must be at least 10 BDT.',
         ];
     }
 }

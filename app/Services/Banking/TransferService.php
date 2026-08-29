@@ -112,7 +112,7 @@ class TransferService
         if ($assessment->shouldNotify()) {
             DB::afterCommit(function () use ($fromAccount, $amount) {
                 if ($fromAccount->user) {
-                    $formatted = number_format($amount);
+                    $formatted = formatPaisa($amount);
                     $fromAccount->user->notify(new SuspiciousActivityAlertNotification(
                         actionDescription: "Transfer of {$formatted} BDT",
                         ip: request()?->ip(),

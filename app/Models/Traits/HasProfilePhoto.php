@@ -10,6 +10,7 @@ use Laravel\Jetstream\HasProfilePhoto as JetstreamHasProfilePhoto;
 
 /**
  * @property string|null $profile_photo_path
+ *
  * @method $this forceFill(array $attributes)
  * @method bool save(array $options = [])
  */
@@ -20,7 +21,6 @@ trait HasProfilePhoto
     /**
      * Override: Update the user's profile photo using WebP optimization.
      *
-     * @param  \Illuminate\Http\UploadedFile  $photo
      * @param  string  $storagePath
      * @return void
      */
@@ -28,10 +28,10 @@ trait HasProfilePhoto
     {
         tap($this->profile_photo_path, function ($previous) use ($photo, $storagePath) {
             $optimizer = app(ImageOptimizer::class);
-            
+
             $disk = $this->profilePhotoDisk();
-            $filename = Str::random(40) . '.webp';
-            $destinationPath = trim($storagePath, '/') . '/' . $filename;
+            $filename = Str::random(40).'.webp';
+            $destinationPath = trim($storagePath, '/').'/'.$filename;
 
             // Process and upload
             $path = $optimizer->toWebp(

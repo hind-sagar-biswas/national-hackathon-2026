@@ -40,7 +40,7 @@ class DepositConfirmedNotification extends Notification
 
     protected function getNotificationMessage(): string
     {
-        $formatted = number_format($this->depositRequest->amount);
+        $formatted = formatPaisa($this->depositRequest->amount);
         $providerName = ucfirst($this->depositRequest->provider->value);
 
         return "Your deposit of {$formatted} {$this->currency} via {$providerName} has been verified and added to your wallet.";

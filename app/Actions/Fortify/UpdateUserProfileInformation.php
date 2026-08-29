@@ -14,7 +14,7 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
     public function __construct(
         protected ImageOptimizer $optimizer
     ) {}
-    
+
     /**
      * Validate and update the given user's profile information.
      *

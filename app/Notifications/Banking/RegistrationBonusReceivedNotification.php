@@ -39,7 +39,7 @@ class RegistrationBonusReceivedNotification extends Notification
 
     protected function getNotificationMessage(): string
     {
-        $formatted = number_format($this->amount);
+        $formatted = formatPaisa($this->amount);
 
         return "Welcome to MaMoney! Your wallet has been credited with a registration bonus of {$formatted} {$this->currency}.";
     }

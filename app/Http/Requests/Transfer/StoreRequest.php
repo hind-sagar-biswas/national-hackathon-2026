@@ -16,7 +16,7 @@ class StoreRequest extends FormRequest
     {
         return [
             'recipient' => ['required', 'string', 'max:255'],
-            'amount' => ['required', 'integer', 'min:1'],
+            'amount' => ['required', 'numeric', 'min:10'],
             'idempotency_key' => ['required', 'string', 'max:255'],
             'otp_code' => ['nullable', 'string', 'max:10'],
             'note' => ['nullable', 'string', 'max:255'],
@@ -27,7 +27,7 @@ class StoreRequest extends FormRequest
     {
         return [
             'recipient.required' => 'Please enter the recipient email address or phone number.',
-            'amount.min' => 'Transfer amount must be at least 1.',
+            'amount.min' => 'Transfer amount must be at least 10 BDT.',
             'idempotency_key.required' => 'An idempotency key is required for this operation.',
         ];
     }

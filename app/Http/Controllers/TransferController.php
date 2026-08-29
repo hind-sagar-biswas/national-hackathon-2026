@@ -62,6 +62,7 @@ class TransferController extends Controller
         /** @var User $sender */
         $sender = Auth::user();
         $senderAccount = $sender->account;
+        $senderAccount->load('account.user');
 
         if (! $senderAccount) {
             throw ValidationException::withMessages([
@@ -95,7 +96,7 @@ class TransferController extends Controller
             ]);
         }
 
-        $amount = (int) $request->validated('amount');
+        $amount = toPaisa($request->validated('amount'));
         $idempotencyKey = $request->validated('idempotency_key');
         $otpCode = $request->validated('otp_code');
         $note = $request->validated('note');
@@ -112,7 +113,9 @@ class TransferController extends Controller
                 otpCode: $otpCode,
             );
 
-            return back()->with('success', "Successfully transferred {$amount} BDT to {$recipient->name}. (Ref: {$transaction->reference})");
+            $formattedAmount = formatPaisa($amount);
+
+            return back()->with('success', "Successfully transferred {$formattedAmount} BDT to {$recipient->name}. (Ref: {$transaction->reference})");
         } catch (RiskChallengeRequiredException $e) {
             return back()->with([
                 'challenge_required' => true,

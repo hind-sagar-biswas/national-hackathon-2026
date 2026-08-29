@@ -26,3 +26,33 @@ if (! function_exists('handleErrorResponse')) {
         return back()->dangerBanner($message);
     }
 }
+
+if (! function_exists('toPaisa')) {
+    /**
+     * Convert Tk (BDT) to integer Paisa (1 Tk = 100 Paisa).
+     */
+    function toPaisa(float|int|string $taka): int
+    {
+        return (int) round(((float) $taka) * 100);
+    }
+}
+
+if (! function_exists('fromPaisa')) {
+    /**
+     * Convert integer Paisa to Tk (BDT).
+     */
+    function fromPaisa(?int $paisa): float
+    {
+        return ((float) ($paisa ?? 0)) / 100;
+    }
+}
+
+if (! function_exists('formatPaisa')) {
+    /**
+     * Format integer Paisa as a decimal BDT string (e.g. 50000 -> 500.00).
+     */
+    function formatPaisa(?int $paisa): string
+    {
+        return number_format(((float) ($paisa ?? 0)) / 100, 2);
+    }
+}

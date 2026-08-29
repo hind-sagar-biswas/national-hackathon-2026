@@ -42,7 +42,7 @@ class LoanSettledNotification extends Notification
 
     protected function getNotificationMessage(): string
     {
-        $formatted = number_format($this->loan->principal_amount);
+        $formatted = formatPaisa($this->loan->principal_amount);
 
         if ($this->isLender) {
             return "Loan #{$this->loan->id} for {$formatted} {$this->currency} has been fully repaid by {$this->otherPartyName} and is now settled.";

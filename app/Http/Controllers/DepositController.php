@@ -60,7 +60,7 @@ class DepositController extends Controller
 
         $provider = DepositProvider::from($request->validated('provider'));
         $providerRef = trim($request->validated('provider_ref'));
-        $amount = (int) $request->validated('amount');
+        $amount = toPaisa($request->validated('amount'));
 
         try {
             $depositService->initiate(
@@ -70,7 +70,9 @@ class DepositController extends Controller
                 amount: $amount,
             );
 
-            return back()->with('success', 'Your deposit request has been submitted and is pending verification.');
+            $formattedAmount = formatPaisa($amount);
+
+            return back()->with('success', "Your deposit request for {$formattedAmount} BDT has been submitted and is pending verification.");
         } catch (Throwable $e) {
             throw ValidationException::withMessages([
                 'amount' => $e->getMessage(),

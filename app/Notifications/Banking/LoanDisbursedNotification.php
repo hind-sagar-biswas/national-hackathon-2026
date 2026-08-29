@@ -41,7 +41,7 @@ class LoanDisbursedNotification extends Notification
 
     protected function getNotificationMessage(): string
     {
-        $formatted = number_format($this->loan->principal_amount);
+        $formatted = formatPaisa($this->loan->principal_amount);
         $due = $this->loan->due_at ? " (Due: {$this->loan->due_at->format('M d, Y')})" : '';
 
         return "{$this->lenderName} has disbursed a loan of {$formatted} {$this->currency} to you.{$due}";

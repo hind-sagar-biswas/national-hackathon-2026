@@ -42,8 +42,8 @@ class LoanRepaymentReceivedNotification extends Notification
 
     protected function getNotificationMessage(): string
     {
-        $formattedAmount = number_format($this->amount);
-        $remaining = number_format($this->loan->outstanding_amount);
+        $formattedAmount = formatPaisa($this->amount);
+        $remaining = formatPaisa($this->loan->outstanding_amount);
 
         return "{$this->borrowerName} paid {$formattedAmount} {$this->currency} towards Loan #{$this->loan->id}. Remaining balance: {$remaining} {$this->currency}.";
     }

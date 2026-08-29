@@ -42,7 +42,7 @@ class TransactionHeldNotification extends Notification
 
     protected function getNotificationMessage(): string
     {
-        $formatted = number_format($this->amount);
+        $formatted = formatPaisa($this->amount);
 
         return "Your transaction of {$formatted} {$this->currency} (Ref: {$this->transaction->reference}) has been placed on temporary hold. Reason: {$this->reason}.";
     }

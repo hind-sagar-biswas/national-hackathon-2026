@@ -16,7 +16,7 @@ class StoreRequest extends FormRequest
     {
         return [
             'payer' => ['required', 'string', 'max:255'],
-            'amount' => ['required', 'integer', 'min:1'],
+            'amount' => ['required', 'numeric', 'min:10'],
             'expires_in_days' => ['nullable', 'integer', 'min:1', 'max:30'],
             'pre_hold' => ['nullable', 'boolean'],
             'note' => ['nullable', 'string', 'max:255'],
@@ -27,7 +27,7 @@ class StoreRequest extends FormRequest
     {
         return [
             'payer.required' => 'Please enter the email address or phone number of the person you are requesting money from.',
-            'amount.min' => 'Requested amount must be at least 1.',
+            'amount.min' => 'Requested amount must be at least 10 BDT.',
         ];
     }
 }

@@ -23,12 +23,12 @@ class LargeAmountRiskRule implements RiskRuleInterface
         $amount = $context->amount;
         $points = 0;
 
-        // Absolute thresholds
-        if ($amount >= 80000) {
+        // Absolute thresholds in Paisa (80,000 BDT, 50,000 BDT, 25,000 BDT)
+        if ($amount >= 8000000) {
             $points += 50;
-        } elseif ($amount >= 50000) {
+        } elseif ($amount >= 5000000) {
             $points += 30;
-        } elseif ($amount >= 25000) {
+        } elseif ($amount >= 2500000) {
             $points += 15;
         }
 
@@ -43,9 +43,9 @@ class LargeAmountRiskRule implements RiskRuleInterface
 
     public function getReason(RiskContextDTO $context): ?string
     {
-        $formatted = number_format($context->amount);
+        $formatted = formatPaisa($context->amount);
 
-        if ($context->amount >= 50000) {
+        if ($context->amount >= 5000000) {
             return "High value transfer of {$formatted} BDT exceeds standard thresholds.";
         }
 

@@ -16,7 +16,7 @@ class StoreRequest extends FormRequest
     {
         return [
             'borrower' => ['required', 'string', 'max:255'],
-            'principal_amount' => ['required', 'integer', 'min:1'],
+            'principal_amount' => ['required', 'numeric', 'min:10'],
             'due_at' => ['nullable', 'date', 'after:today'],
             'note' => ['nullable', 'string', 'max:255'],
             'idempotency_key' => ['required', 'string', 'max:255'],
@@ -27,7 +27,7 @@ class StoreRequest extends FormRequest
     {
         return [
             'borrower.required' => 'Please enter the email address or phone number of the borrower.',
-            'principal_amount.min' => 'Principal loan amount must be at least 1.',
+            'principal_amount.min' => 'Principal loan amount must be at least 10 BDT.',
             'due_at.after' => 'Due date must be in the future.',
         ];
     }

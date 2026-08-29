@@ -50,7 +50,6 @@ class SystemAccountSeeder extends Seeder
             ]
         );
 
-
         Account::firstOrCreate(
             ['slug' => 'users_wallet'],
             [

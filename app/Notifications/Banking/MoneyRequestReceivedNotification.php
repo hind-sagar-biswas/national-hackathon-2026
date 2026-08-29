@@ -41,7 +41,7 @@ class MoneyRequestReceivedNotification extends Notification
 
     protected function getNotificationMessage(): string
     {
-        $formatted = number_format($this->moneyRequest->amount);
+        $formatted = formatPaisa($this->moneyRequest->amount);
         $expires = $this->moneyRequest->expires_at ? " (Expires: {$this->moneyRequest->expires_at->diffForHumans()})" : '';
 
         return "{$this->requesterName} has requested {$formatted} {$this->currency} from you.{$expires}";

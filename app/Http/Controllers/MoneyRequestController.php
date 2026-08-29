@@ -100,7 +100,7 @@ class MoneyRequestController extends Controller
             ]);
         }
 
-        $amount = (int) $request->validated('amount');
+        $amount = toPaisa($request->validated('amount'));
         $expiresInDays = (int) ($request->validated('expires_in_days') ?? 3);
         $expiresAt = now()->addDays($expiresInDays);
         $preHold = (bool) $request->validated('pre_hold', false);
@@ -114,7 +114,9 @@ class MoneyRequestController extends Controller
                 preHold: $preHold,
             );
 
-            return back()->with('success', "Money request for {$amount} BDT sent to {$payer->name}.");
+            $formattedAmount = formatPaisa($amount);
+
+            return back()->with('success', "Money request for {$formattedAmount} BDT sent to {$payer->name}.");
         } catch (Throwable $e) {
             throw ValidationException::withMessages([
                 'amount' => $e->getMessage(),

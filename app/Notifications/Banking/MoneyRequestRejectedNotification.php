@@ -41,7 +41,7 @@ class MoneyRequestRejectedNotification extends Notification
 
     protected function getNotificationMessage(): string
     {
-        $formatted = number_format($this->moneyRequest->amount);
+        $formatted = formatPaisa($this->moneyRequest->amount);
 
         return "{$this->payerName} declined your request for {$formatted} {$this->currency}.";
     }

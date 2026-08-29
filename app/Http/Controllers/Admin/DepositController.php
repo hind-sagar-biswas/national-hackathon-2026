@@ -82,7 +82,9 @@ class DepositController extends Controller
         try {
             $depositService->confirm($depositRequest);
 
-            return back()->with('success', "Deposit #{$depositRequest->id} for {$depositRequest->amount} BDT confirmed and credited to user wallet.");
+            $formattedAmount = formatPaisa($depositRequest->amount);
+
+            return back()->with('success', "Deposit #{$depositRequest->id} for {$formattedAmount} BDT confirmed and credited to user wallet.");
         } catch (Throwable $e) {
             throw ValidationException::withMessages([
                 'deposit' => $e->getMessage(),

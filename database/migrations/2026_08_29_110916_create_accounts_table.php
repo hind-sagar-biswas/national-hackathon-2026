@@ -1,7 +1,7 @@
 <?php
 
-use App\Enums\AccountType;
 use App\Enums\AccountOwner;
+use App\Enums\AccountType;
 use App\Models\User;
 use HindBiswas\ModelUtils\Utils\EnumUtil;
 use Illuminate\Database\Migrations\Migration;
