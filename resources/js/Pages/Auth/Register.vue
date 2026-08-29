@@ -56,7 +56,7 @@ const submit = () => {
             </FormField>
 
             <FormField name="nid" :error="form.errors.nid" class="mt-4">
-                <TextInput id="nid" v-model="form.nid" type="tel" class="mt-1 block w-full" required placeholder="XXXX"
+                <TextInput id="nid" v-model="form.nid" type="text" class="mt-1 block w-full" required placeholder="XXXX"
                     autocomplete="nid" />
             </FormField>
 
