@@ -6,6 +6,7 @@ use App\Enums\Role;
 use App\Models\Admin;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class AdminSeeder extends Seeder
 {
@@ -14,26 +15,40 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
-        // Super Admin
-        $user = User::factory()->create([
-            'name' => 'Super Admin',
-            'email' => 'super@test.com',
-            'phone' => '01711111111',
-        ]);
-        Admin::create([
-            'user_id' => $user->id,
-            'is_super' => true,
-        ]);
-        $user->assignRole(Role::ADMIN);
+        // 1. Super Admin
+        $superUser = User::firstOrCreate(
+            ['email' => 'super@test.com'],
+            [
+                'name' => 'Super Admin',
+                'phone' => '01711111111',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ]
+        );
 
-        // Admin
-        // $user = User::factory()->create([
-        //     'name' => 'Admin',
-        //     'email' => 'admin@test.com',
-        // ]);
-        // Admin::create([
-        //     'user_id' => $user->id,
-        // ]);
-        // $user->assignRole(Role::ADMIN);
+        Admin::firstOrCreate(
+            ['user_id' => $superUser->id],
+            ['is_super' => true]
+        );
+
+        $superUser->assignRole(Role::ADMIN);
+
+        // 2. Operations Admin
+        $opsAdmin = User::firstOrCreate(
+            ['email' => 'admin@test.com'],
+            [
+                'name' => 'Operations Admin',
+                'phone' => '01711111112',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+
+        Admin::firstOrCreate(
+            ['user_id' => $opsAdmin->id],
+            ['is_super' => false]
+        );
+
+        $opsAdmin->assignRole(Role::ADMIN);
     }
 }
