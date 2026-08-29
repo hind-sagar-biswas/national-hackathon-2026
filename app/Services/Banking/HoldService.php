@@ -29,7 +29,9 @@ class HoldService
             $lockedAccount = Account::where('id', $account->id)->lockForUpdate()->firstOrFail();
 
             if ($lockedAccount->available_balance < $amount) {
-                throw new RuntimeException("Insufficient available balance for hold. Required: {$amount}, Available: {$lockedAccount->available_balance}");
+                $reqFormatted = formatPaisa($amount);
+                $availFormatted = formatPaisa($lockedAccount->available_balance);
+                throw new RuntimeException("Insufficient available balance for hold. Required: {$reqFormatted} BDT, Available: {$availFormatted} BDT");
             }
 
             // Decrement available balance only; cleared balance remains unaffected

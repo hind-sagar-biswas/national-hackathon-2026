@@ -225,7 +225,9 @@ class TransferService
 
                 // Balance check (liability/user accounts cannot overdraw available balance)
                 if ($lockedSender->owner_type === AccountOwner::USER && $lockedSender->available_balance < $totalDebitAmount) {
-                    throw new RuntimeException("Insufficient available balance. Required: {$totalDebitAmount}, Available: {$lockedSender->available_balance}");
+                    $reqFormatted = formatPaisa($totalDebitAmount);
+                    $availFormatted = formatPaisa($lockedSender->available_balance);
+                    throw new RuntimeException("Insufficient available balance. Required: {$reqFormatted} BDT, Available: {$availFormatted} BDT");
                 }
 
                 // 3. Balance Adjustments
