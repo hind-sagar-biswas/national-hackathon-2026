@@ -15,6 +15,7 @@ import {
     Wallet 
 } from 'lucide-vue-next';
 import { Column, DataTable } from 'primevue';
+import { computed } from 'vue';
 
 const props = defineProps({
     systemAccounts: Object,
@@ -37,6 +38,55 @@ const handleRollup = () => {
         router.post(rollup(), {}, { preserveScroll: true });
     }
 };
+
+// Group raw category rows by as_of timestamp for snapshot display
+const groupedRollups = computed(() => {
+    const list = props.glSummaries?.data || [];
+    const groups = {};
+
+    for (const item of list) {
+        const key = item.as_of?.raw || item.created_at?.raw || item.id;
+        if (!groups[key]) {
+            groups[key] = {
+                id: item.id,
+                as_of: item.as_of?.formatted || item.created_at?.formatted || 'Snapshot',
+                timestamp: item.as_of?.raw || item.created_at?.raw,
+                asset: 0,
+                liability: 0,
+                equity: 0,
+                revenue: 0,
+                asset_formatted: '0.00',
+                liability_formatted: '0.00',
+                equity_formatted: '0.00',
+                revenue_formatted: '0.00',
+            };
+        }
+
+        const cat = item.category?.value || item.category;
+        if (cat === 'asset') {
+            groups[key].asset = item.total?.raw || 0;
+            groups[key].asset_formatted = item.total?.formatted || '0.00';
+        } else if (cat === 'liability') {
+            groups[key].liability = item.total?.raw || 0;
+            groups[key].liability_formatted = item.total?.formatted || '0.00';
+        } else if (cat === 'equity') {
+            groups[key].equity = item.total?.raw || 0;
+            groups[key].equity_formatted = item.total?.formatted || '0.00';
+        } else if (cat === 'revenue') {
+            groups[key].revenue = item.total?.raw || 0;
+            groups[key].revenue_formatted = item.total?.formatted || '0.00';
+        }
+    }
+
+    return Object.values(groups).map(g => {
+        // Zero-sum accounting equation check: sum of all double-entry categories balances to 0
+        const isBalanced = (g.asset + g.liability + g.equity + g.revenue) === 0;
+        return {
+            ...g,
+            is_balanced: isBalanced,
+        };
+    });
+});
 </script>
 
 <template>
@@ -149,7 +199,7 @@ const handleRollup = () => {
                 </h3>
 
                 <div class="overflow-x-auto">
-                    <DataTable :value="glSummaries?.data || []" tableStyle="min-width: 50rem" class="bg-base-100">
+                    <DataTable :value="groupedRollups" tableStyle="min-width: 50rem" class="bg-base-100">
                         <Column field="as_of" header="As Of Date">
                             <template #body="slotProps">
                                 <span class="font-mono text-xs font-bold text-primary">
@@ -157,24 +207,24 @@ const handleRollup = () => {
                                 </span>
                             </template>
                         </Column>
-                        <Column field="total_assets" header="Total Assets">
+                        <Column field="asset_formatted" header="Total Assets">
                             <template #body="slotProps">
                                 <span class="font-semibold text-info">
-                                    {{ slotProps.data.total_assets?.formatted ?? slotProps.data.total_assets }} BDT
+                                    {{ slotProps.data.asset_formatted }} BDT
                                 </span>
                             </template>
                         </Column>
-                        <Column field="total_liabilities" header="Total Liabilities">
+                        <Column field="liability_formatted" header="Total Liabilities">
                             <template #body="slotProps">
                                 <span class="font-semibold text-warning">
-                                    {{ slotProps.data.total_liabilities?.formatted ?? slotProps.data.total_liabilities }} BDT
+                                    {{ slotProps.data.liability_formatted }} BDT
                                 </span>
                             </template>
                         </Column>
-                        <Column field="total_equity" header="Total Equity">
+                        <Column field="equity_formatted" header="Total Equity">
                             <template #body="slotProps">
                                 <span class="font-semibold text-success">
-                                    {{ slotProps.data.total_equity?.formatted ?? slotProps.data.total_equity }} BDT
+                                    {{ slotProps.data.equity_formatted }} BDT
                                 </span>
                             </template>
                         </Column>
