@@ -55,7 +55,7 @@ return Application::configure(basePath: dirname(__DIR__))
             return $response;
         });
     })->withSchedule(function (Schedule $schedule) {
-        $schedule->command('queue:work --tries=3 --stop-when-empty')->name('queue-work')->everyMinute()->withoutOverlapping();
+        // $schedule->command('queue:work --tries=3 --stop-when-empty')->name('queue-work')->everyMinute()->withoutOverlapping();
         $schedule->job(new HoldExpirySweepJob)->name('hold-expiry-sweep')->everyFiveMinutes()->withoutOverlapping();
         $schedule->job(new LedgerReconciliationJob)->name('ledger-reconciliation')->everyFifteenMinutes()->withoutOverlapping();
         $schedule->job(new GeneralLedgerRollupJob)->name('general-ledger-rollup')->hourly()->withoutOverlapping();
