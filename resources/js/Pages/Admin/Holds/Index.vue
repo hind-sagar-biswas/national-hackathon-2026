@@ -65,11 +65,11 @@ const handleRelease = (hold) => {
             </div>
 
             <!-- Active Held Total Card -->
-            <div class="card bg-warning/10 border border-warning/30 shadow-sm">
+            <div class="card bg-base-100 border border-warning/30 shadow-sm">
                 <div class="card-body p-4 flex flex-row items-center justify-between">
                     <div>
                         <span class="text-xs font-bold text-warning-content block">Total Active Held</span>
-                        <span class="text-xl font-black text-warning">{{ metrics?.total_held_active?.formatted ?? metrics?.total_held_active ?? 0 }} BDT</span>
+                        <span class="text-xl font-black text-warning">{{ metrics?.total_held_active?.formatted ?? metrics?.total_held_active / 100 ?? 0 }} BDT</span>
                     </div>
                     <Lock class="size-7 text-warning opacity-70" />
                 </div>
