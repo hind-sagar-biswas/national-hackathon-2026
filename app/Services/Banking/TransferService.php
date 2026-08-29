@@ -206,10 +206,11 @@ class TransferService
                 $dispatchNotifications
             ) {
                 // 2. Deadlock-free account locking using ordered IDs
-                $accountIds = array_unique(array_filter([$fromAccount->id, $toAccount->id]));
+                $accountIds = [$fromAccount->id, $toAccount->id];
                 sort($accountIds);
 
-                $lockedAccounts = Account::whereIn('id', $accountIds)
+                $lockedAccounts = Account::with('user')
+                    ->whereIn('id', $accountIds)
                     ->lockForUpdate()
                     ->get()
                     ->keyBy('id');

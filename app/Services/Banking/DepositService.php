@@ -56,6 +56,7 @@ class DepositService
             throw new RuntimeException("System 'cash_reserve' account not found.");
         }
 
+        $depositRequest->loadMissing(['user.account']);
         $userAccount = $depositRequest->user->account;
         if (! $userAccount) {
             throw new RuntimeException('User does not have an active wallet account.');
@@ -84,6 +85,7 @@ class DepositService
             ]);
 
             DB::afterCommit(function () use ($depositRequest) {
+                $depositRequest->loadMissing('user');
                 $depositRequest->user->notify(new DepositConfirmedNotification($depositRequest));
             });
 
@@ -104,6 +106,7 @@ class DepositService
             $depositRequest->update(['status' => DepositStatus::FAILED]);
 
             DB::afterCommit(function () use ($depositRequest, $reason) {
+                $depositRequest->loadMissing('user');
                 $depositRequest->user->notify(new DepositFailedNotification($depositRequest, $reason));
             });
         });

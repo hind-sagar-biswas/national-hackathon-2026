@@ -73,6 +73,8 @@ class MoneyRequestService
             }
 
             DB::afterCommit(function () use ($moneyRequest, $payerAccount, $requesterAccount) {
+                $payerAccount->loadMissing('user');
+                $requesterAccount->loadMissing('user');
                 $payerUser = $payerAccount->user;
                 if ($payerUser) {
                     $requesterName = $requesterAccount->user ? $requesterAccount->user->name : 'Someone';
@@ -151,6 +153,7 @@ class MoneyRequestService
             ]);
 
             DB::afterCommit(function () use ($moneyRequest, $loan) {
+                $moneyRequest->loadMissing(['requesterAccount.user', 'payerAccount.user']);
                 $requesterUser = $moneyRequest->requesterAccount->user;
                 $payerUser = $moneyRequest->payerAccount->user;
                 $payerName = $payerUser ? $payerUser->name : 'Payer';
@@ -185,6 +188,7 @@ class MoneyRequestService
             $moneyRequest->update(['status' => RequestStatus::REJECTED]);
 
             DB::afterCommit(function () use ($moneyRequest) {
+                $moneyRequest->loadMissing(['requesterAccount.user', 'payerAccount.user']);
                 $requesterUser = $moneyRequest->requesterAccount->user;
                 if ($requesterUser) {
                     $payerName = $moneyRequest->payerAccount->user ? $moneyRequest->payerAccount->user->name : 'Payer';
