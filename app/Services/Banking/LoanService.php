@@ -1,0 +1,198 @@
+<?php
+
+namespace App\Services\Banking;
+
+use App\Enums\LoanStatus;
+use App\Enums\TransactionType;
+use App\Models\Loan;
+use App\Models\LoanRepayment;
+use App\Models\User;
+use App\Notifications\Banking\LoanDisbursedNotification;
+use App\Notifications\Banking\LoanRepaymentReceivedNotification;
+use App\Notifications\Banking\LoanSettledNotification;
+use App\Notifications\Banking\LoanWaivedNotification;
+use Carbon\CarbonInterface;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use RuntimeException;
+
+class LoanService
+{
+    public function __construct(
+        protected TransferService $transferService,
+    ) {}
+
+    /**
+     * Disburse a peer-to-peer loan from lender to borrower.
+     */
+    public function disburse(
+        User $lender,
+        User $borrower,
+        int $principalAmount,
+        ?CarbonInterface $dueAt = null,
+        ?string $note = null,
+        ?string $idempotencyKey = null,
+    ): Loan {
+        if ($principalAmount <= 0) {
+            throw new RuntimeException('Principal amount must be greater than zero.');
+        }
+
+        if ($lender->id === $borrower->id) {
+            throw new RuntimeException('Lender and borrower cannot be the same user.');
+        }
+
+        $lenderAccount = $lender->account;
+        $borrowerAccount = $borrower->account;
+
+        if (! $lenderAccount || ! $borrowerAccount) {
+            throw new RuntimeException('Both lender and borrower must have active wallets.');
+        }
+
+        $idempotencyKey = $idempotencyKey ?: "loan_disb_{$lender->id}_{$borrower->id}_".Str::random(8);
+
+        return DB::transaction(function () use (
+            $lender,
+            $borrower,
+            $lenderAccount,
+            $borrowerAccount,
+            $principalAmount,
+            $dueAt,
+            $note,
+            $idempotencyKey
+        ) {
+            $transaction = $this->transferService->transfer(
+                fromAccount: $lenderAccount,
+                toAccount: $borrowerAccount,
+                amount: $principalAmount,
+                type: TransactionType::LOAN_DISBURSEMENT,
+                idempotencyKey: $idempotencyKey,
+                initiatedByUserId: $lender->id,
+                metadata: ['loan_action' => 'disbursement'],
+            );
+
+            $loan = Loan::create([
+                'lender_user_id' => $lender->id,
+                'borrower_user_id' => $borrower->id,
+                'principal_amount' => $principalAmount,
+                'outstanding_amount' => $principalAmount,
+                'status' => LoanStatus::ACTIVE,
+                'disbursement_txn_id' => $transaction->id,
+                'due_at' => $dueAt,
+                'note' => $note,
+            ]);
+
+            DB::afterCommit(function () use ($loan, $borrower, $lender) {
+                $borrower->notify(new LoanDisbursedNotification($loan, $lender->name));
+            });
+
+            return $loan;
+        });
+    }
+
+    /**
+     * Record a partial or full loan repayment from borrower to lender.
+     */
+    public function repay(
+        Loan $loan,
+        int $amount,
+        ?string $idempotencyKey = null,
+    ): LoanRepayment {
+        if ($amount <= 0) {
+            throw new RuntimeException('Repayment amount must be greater than zero.');
+        }
+
+        if (! in_array($loan->status, [LoanStatus::ACTIVE, LoanStatus::PARTIAL])) {
+            throw new RuntimeException("Loan cannot be repaid in '{$loan->status->value}' status.");
+        }
+
+        if ($amount > $loan->outstanding_amount) {
+            throw new RuntimeException("Repayment amount ({$amount}) exceeds outstanding loan balance ({$loan->outstanding_amount}).");
+        }
+
+        $borrowerAccount = $loan->borrower->account;
+        $lenderAccount = $loan->lender->account;
+
+        if (! $borrowerAccount || ! $lenderAccount) {
+            throw new RuntimeException('Borrower and lender wallets must be active.');
+        }
+
+        $idempotencyKey = $idempotencyKey ?: "loan_repay_{$loan->id}_".Str::random(8);
+
+        return DB::transaction(function () use ($loan, $borrowerAccount, $lenderAccount, $amount, $idempotencyKey) {
+            /** @var Loan $lockedLoan */
+            $lockedLoan = Loan::where('id', $loan->id)->lockForUpdate()->firstOrFail();
+
+            $transaction = $this->transferService->transfer(
+                fromAccount: $borrowerAccount,
+                toAccount: $lenderAccount,
+                amount: $amount,
+                type: TransactionType::LOAN_REPAYMENT,
+                idempotencyKey: $idempotencyKey,
+                initiatedByUserId: $loan->borrower_user_id,
+                metadata: ['loan_id' => $lockedLoan->id, 'loan_action' => 'repayment'],
+            );
+
+            $repayment = LoanRepayment::create([
+                'loan_id' => $lockedLoan->id,
+                'transaction_id' => $transaction->id,
+                'amount' => $amount,
+            ]);
+
+            $newOutstanding = max(0, $lockedLoan->outstanding_amount - $amount);
+            $newStatus = $newOutstanding === 0 ? LoanStatus::SETTLED : LoanStatus::PARTIAL;
+
+            $lockedLoan->update([
+                'outstanding_amount' => $newOutstanding,
+                'status' => $newStatus,
+            ]);
+
+            DB::afterCommit(function () use ($lockedLoan, $amount, $newStatus) {
+                $lender = $lockedLoan->lender;
+                $borrower = $lockedLoan->borrower;
+
+                if ($lender) {
+                    $lender->notify(new LoanRepaymentReceivedNotification($lockedLoan, $amount, $borrower->name));
+                }
+
+                if ($newStatus === LoanStatus::SETTLED) {
+                    if ($borrower) {
+                        $borrower->notify(new LoanSettledNotification($lockedLoan, $lender->name, isLender: false));
+                    }
+                    if ($lender) {
+                        $lender->notify(new LoanSettledNotification($lockedLoan, $borrower->name, isLender: true));
+                    }
+                }
+            });
+
+            return $repayment;
+        });
+    }
+
+    /**
+     * Forgive/waive a loan balance (status change only, no money movement).
+     */
+    public function waive(Loan $loan, User $lender): void
+    {
+        if ($loan->lender_user_id !== $lender->id) {
+            throw new RuntimeException('Only the lender can waive this loan.');
+        }
+
+        if (! in_array($loan->status, [LoanStatus::ACTIVE, LoanStatus::PARTIAL])) {
+            throw new RuntimeException("Loan cannot be waived in '{$loan->status->value}' status.");
+        }
+
+        DB::transaction(function () use ($loan, $lender) {
+            $loan->update([
+                'status' => LoanStatus::WAIVED,
+                'outstanding_amount' => 0,
+            ]);
+
+            DB::afterCommit(function () use ($loan, $lender) {
+                $borrower = $loan->borrower;
+                if ($borrower) {
+                    $borrower->notify(new LoanWaivedNotification($loan, $lender->name));
+                }
+            });
+        });
+    }
+}
