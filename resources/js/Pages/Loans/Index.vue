@@ -90,7 +90,8 @@ const openRepayModal = (loan) => {
     selectedLoanToRepay.value = loan;
     repayForm.resetKey();
     repayForm.form.reset();
-    repayForm.form.amount = loan.outstanding_amount?.raw || loan.outstanding_amount;
+    const rawPaisa = loan.outstanding_amount?.raw ?? loan.outstanding_amount;
+    repayForm.form.amount = typeof rawPaisa === 'number' ? (rawPaisa / 100) : rawPaisa;
     showRepayModal.value = true;
 };
 
@@ -140,9 +141,6 @@ const openRequestLoanModal = () => {
                         </div>
                     </div>
 
-                    <Button color="primary" @click="openRequestLoanModal">
-                        <PlusCircle class="inline-block me-1" size="16" /> Request Loan
-                    </Button>
                 </div>
             </div>
 
@@ -379,7 +377,7 @@ const openRequestLoanModal = () => {
                 <form @submit.prevent="handleRepaySubmit" id="repay-form" class="space-y-4">
                     <div class="bg-base-200 p-3 rounded-md text-xs space-y-1">
                         <div class="flex justify-between">
-                            <span class="text-base-content/60">Outstanding Balance:</span>
+                            <span class="text-base-content/60">Outstanding Debt:</span>
                             <span class="font-extrabold text-error">{{ selectedLoanToRepay?.outstanding_amount?.formatted }} BDT</span>
                         </div>
                     </div>
@@ -392,7 +390,7 @@ const openRequestLoanModal = () => {
                             min="1" 
                             v-model="repayForm.form.amount" 
                             class="w-full mt-1 font-bold text-lg"
-                            placeholder="Enter repayment amount" 
+                            placeholder="Enter repayment amount in Taka" 
                             required 
                         />
                         <InputError :message="repayForm.form.errors.amount" class="mt-1" />

@@ -42,7 +42,8 @@ const repayForm = useIdempotentForm({
 const openRepayModal = () => {
     repayForm.resetKey();
     repayForm.form.reset();
-    repayForm.form.amount = props.loan?.outstanding_amount?.raw || props.loan?.outstanding_amount;
+    const rawPaisa = props.loan?.outstanding_amount?.raw ?? props.loan?.outstanding_amount;
+    repayForm.form.amount = typeof rawPaisa === 'number' ? (rawPaisa / 100) : rawPaisa;
     showRepayModal.value = true;
 };
 
@@ -228,7 +229,7 @@ const handleWaiveLoan = () => {
                             min="1" 
                             v-model="repayForm.form.amount" 
                             class="w-full mt-1 font-bold text-lg"
-                            placeholder="Enter repayment amount" 
+                            placeholder="Enter repayment amount in Taka" 
                             required 
                         />
                         <InputError :message="repayForm.form.errors.amount" class="mt-1" />
