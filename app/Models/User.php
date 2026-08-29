@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Models\Traits\HasProfilePhoto;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -118,5 +119,30 @@ class User extends Authenticatable
     public function admin(): HasOne
     {
         return $this->hasOne(Admin::class);
+    }
+
+    public function account(): HasOne
+    {
+        return $this->hasOne(Account::class);
+    }
+
+    public function loansGiven(): HasMany
+    {
+        return $this->hasMany(Loan::class, 'lender_user_id');
+    }
+
+    public function loansReceived(): HasMany
+    {
+        return $this->hasMany(Loan::class, 'borrower_user_id');
+    }
+
+    public function depositRequests(): HasMany
+    {
+        return $this->hasMany(DepositRequest::class);
+    }
+
+    public function transactionsInitiated(): HasMany
+    {
+        return $this->hasMany(Transaction::class, 'initiated_by');
     }
 }
