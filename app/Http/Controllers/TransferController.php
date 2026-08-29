@@ -62,7 +62,7 @@ class TransferController extends Controller
         /** @var User $sender */
         $sender = Auth::user();
         $senderAccount = $sender->account;
-        $senderAccount->load('account.user');
+        $senderAccount->load('user');
 
         if (! $senderAccount) {
             throw ValidationException::withMessages([
