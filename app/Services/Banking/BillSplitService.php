@@ -61,11 +61,21 @@ class BillSplitService
                 break;
             }
         }
+
         if (! $hasInitiator) {
-            $rawParticipants[] = [
-                'user_id' => $initiator->id,
-                'value' => 1.0,
-            ];
+            if ($mode === BillSplitMode::PERCENTAGE) {
+                $existingPctSum = array_sum(array_column($rawParticipants, 'value'));
+                $initiatorPct = max(0.0, 100.0 - $existingPctSum);
+                $rawParticipants[] = [
+                    'user_id' => $initiator->id,
+                    'value' => $initiatorPct,
+                ];
+            } else {
+                $rawParticipants[] = [
+                    'user_id' => $initiator->id,
+                    'value' => 1.0,
+                ];
+            }
         }
 
         $computedShares = $this->calculateShares($totalAmount, $mode, $rawParticipants, $initiator->id);
@@ -103,7 +113,7 @@ class BillSplitService
                 }
 
                 $moneyRequest = null;
-                if (! $isInitiator) {
+                if (! $isInitiator && $share['share_amount'] > 0) {
                     $moneyRequest = MoneyRequest::create([
                         'requester_account_id' => $initiatorAccount->id,
                         'payer_account_id' => $user->account->id,
@@ -172,41 +182,48 @@ class BillSplitService
             ]);
         }
 
-        // Place a Hold on the participant's account for their share
+        // Place a Hold on the participant's account for their share (if share > 0)
         $account = $participant->relationLoaded('account')
             ? $participant->account
             : $participant->account()->firstOrFail();
 
-        if (! $account || $account->available_balance < $participant->share_amount) {
-            throw ValidationException::withMessages([
-                'balance' => 'Insufficient available balance to accept this bill split share.',
-            ]);
-        }
-
-        DB::transaction(function () use ($participant, $account, $billSplit) {
-            $hold = $this->holdService->createHold(
-                account: $account,
-                amount: $participant->share_amount,
-                reason: "Bill split hold: {$billSplit->title}",
-                reference: $billSplit,
-            );
-
-            $participant->update([
-                'status' => BillSplitParticipantStatus::ACCEPTED,
-                'hold_id' => $hold->id,
-                'accepted_at' => now(),
-            ]);
-
-            $moneyRequest = $participant->relationLoaded('moneyRequest')
-                ? $participant->moneyRequest
-                : $participant->moneyRequest()->first();
-
-            if ($moneyRequest) {
-                $moneyRequest->update([
-                    'hold_id' => $hold->id,
+        if ($participant->share_amount > 0) {
+            if (! $account || $account->available_balance < $participant->share_amount) {
+                throw ValidationException::withMessages([
+                    'balance' => 'Insufficient available balance to accept this bill split share.',
                 ]);
             }
-        });
+
+            DB::transaction(function () use ($participant, $account, $billSplit) {
+                $hold = $this->holdService->createHold(
+                    account: $account,
+                    amount: $participant->share_amount,
+                    reason: "Bill split hold: {$billSplit->title}",
+                    reference: $billSplit,
+                );
+
+                $participant->update([
+                    'status' => BillSplitParticipantStatus::ACCEPTED,
+                    'hold_id' => $hold->id,
+                    'accepted_at' => now(),
+                ]);
+
+                $moneyRequest = $participant->relationLoaded('moneyRequest')
+                    ? $participant->moneyRequest
+                    : $participant->moneyRequest()->first();
+
+                if ($moneyRequest) {
+                    $moneyRequest->update([
+                        'hold_id' => $hold->id,
+                    ]);
+                }
+            });
+        } else {
+            $participant->update([
+                'status' => BillSplitParticipantStatus::ACCEPTED,
+                'accepted_at' => now(),
+            ]);
+        }
 
         // Check if all participants have accepted
         $allAccepted = $billSplit->participants()
@@ -269,6 +286,16 @@ class BillSplitService
     }
 
     /**
+     * Expire a pending bill split and release pre-placed holds.
+     */
+    public function expireBillSplit(BillSplit $billSplit): void
+    {
+        if ($billSplit->status === BillSplitStatus::PENDING) {
+            $this->failBillSplit($billSplit, 'Bill split expired');
+        }
+    }
+
+    /**
      * Atomic collective settlement when all participants have accepted.
      */
     protected function settleBillSplit(BillSplit $billSplit): void
@@ -280,30 +307,44 @@ class BillSplitService
 
         DB::transaction(function () use ($billSplit, $initiatorAccount, $participants) {
             foreach ($participants as $participant) {
-                if ($participant->is_initiator) {
+                if ($participant->is_initiator || $participant->share_amount <= 0) {
                     continue;
                 }
 
-                // 1. Capture hold
+                // 1. Capture hold & transfer from participant -> initiator
                 if ($participant->hold && $participant->hold->status === HoldStatus::ACTIVE) {
-                    $this->holdService->captureHold($participant->hold);
+                    $this->holdService->captureHold($participant->hold, function () use ($participant, $initiatorAccount, $billSplit) {
+                        $this->transferService->transfer(
+                            fromAccount: $participant->account,
+                            toAccount: $initiatorAccount,
+                            amount: $participant->share_amount,
+                            type: TransactionType::TRANSFER,
+                            idempotencyKey: "bill-split:{$billSplit->id}:p:{$participant->id}",
+                            initiatedByUserId: $participant->user_id,
+                            metadata: [
+                                'bill_split_id' => $billSplit->id,
+                                'bill_split_title' => $billSplit->title,
+                            ],
+                            dispatchNotifications: false,
+                        );
+                    });
+                } else {
+                    $this->transferService->transfer(
+                        fromAccount: $participant->account,
+                        toAccount: $initiatorAccount,
+                        amount: $participant->share_amount,
+                        type: TransactionType::TRANSFER,
+                        idempotencyKey: "bill-split:{$billSplit->id}:p:{$participant->id}",
+                        initiatedByUserId: $participant->user_id,
+                        metadata: [
+                            'bill_split_id' => $billSplit->id,
+                            'bill_split_title' => $billSplit->title,
+                        ],
+                        dispatchNotifications: false,
+                    );
                 }
 
-                // 2. Transfer from participant -> initiator
-                $this->transferService->transfer(
-                    fromAccount: $participant->account,
-                    toAccount: $initiatorAccount,
-                    amount: $participant->share_amount,
-                    type: TransactionType::TRANSFER,
-                    idempotencyKey: "bill-split:{$billSplit->id}:p:{$participant->id}",
-                    initiatedByUserId: $participant->user_id,
-                    metadata: [
-                        'bill_split_id' => $billSplit->id,
-                        'bill_split_title' => $billSplit->title,
-                    ],
-                );
-
-                // 3. Mark money request approved
+                // 2. Mark money request approved
                 if ($participant->moneyRequest) {
                     $participant->moneyRequest->update([
                         'status' => RequestStatus::APPROVED,
@@ -311,7 +352,7 @@ class BillSplitService
                 }
             }
 
-            // 4. If an external merchant was specified, pay the merchant from initiator
+            // 3. If an external merchant was specified, pay the merchant from initiator
             if ($billSplit->merchant_account_id) {
                 /** @var Account $merchantAccount */
                 $merchantAccount = Account::with('user')->findOrFail($billSplit->merchant_account_id);
@@ -352,9 +393,10 @@ class BillSplitService
      */
     protected function failBillSplit(BillSplit $billSplit, string $reason): void
     {
+        /** @var Collection<BillSplitParticipant> $participants */
         $participants = $billSplit->participants()->with(['user', 'account.user', 'hold', 'moneyRequest'])->get();
 
-        DB::transaction(function () use ($billSplit, $participants) {
+        DB::transaction(function () use ($billSplit, $participants, $reason) {
             $billSplit->update([
                 'status' => BillSplitStatus::FAILED,
             ]);

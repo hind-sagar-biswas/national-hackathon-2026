@@ -14,4 +14,5 @@ enum TransactionType: string
     case LOAN_REPAYMENT = 'loan_repayment';
     case REVERSAL = 'reversal';
     case ADJUSTMENT = 'adjustment';
+    case PAYMENT = 'payment';
 }
